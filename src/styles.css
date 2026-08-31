@@ -426,6 +426,21 @@ p {
   padding: 10px 12px;
 }
 
+.field input::placeholder {
+  color: #c4beb6;
+}
+
+.field input[aria-invalid="true"] {
+  border-color: #e0b4a6;
+}
+
+.sheet-error {
+  text-align: center;
+  font-size: 13px;
+  color: var(--kcal);
+  margin: 0 0 10px;
+}
+
 .field em,
 .weight-row em {
   font-style: normal;
@@ -983,6 +998,11 @@ label.done .g-amt {
 .btn-ghost:active,
 .btn-primary:active {
   transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.45;
+  transform: none;
 }
 
 .tabbar {
