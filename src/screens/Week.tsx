@@ -5,6 +5,7 @@ import {
   isSameDay,
   toDateKey,
   weekDates,
+  weekdayName,
   weekdayShort,
 } from "../lib/date";
 import { dayMacros, recipesForDate } from "../lib/meals";
@@ -28,8 +29,8 @@ export function WeekScreen({
   return (
     <section className="page">
       <header className="page-head">
-        <p className="eyebrow">固定一周循环</p>
-        <h1>本周食谱</h1>
+        <p className="date-line">周一到周日，固定循环</p>
+        <h1>一周都安排好了</h1>
       </header>
 
       <div className="week-strip" role="tablist" aria-label="选择星期">
@@ -54,14 +55,12 @@ export function WeekScreen({
       </div>
 
       <div className="week-summary">
-        <div>
-          <p>
-            {formatChineseDate(selected)} · 星期{weekdayShort(selected)}
-          </p>
-          <strong>
-            {macros.kcal} 千卡 · 蛋白 {macros.protein} 克
-          </strong>
-        </div>
+        <p>
+          {formatChineseDate(selected)} {weekdayName(selected)}
+        </p>
+        <strong>
+          {macros.kcal} 千卡 · 蛋白 {macros.protein} 克
+        </strong>
       </div>
 
       <div className="meal-list">

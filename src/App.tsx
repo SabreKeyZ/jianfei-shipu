@@ -57,10 +57,6 @@ export function App() {
   return (
     <div className="app-shell">
       <div className="phone">
-        <div className="status-bar" aria-hidden>
-          <span>今日减脂</span>
-          <span>微信</span>
-        </div>
         <main className={showRecipe ? "main recipe-open" : "main"}>
           {showRecipe && route.recipeId ? (
             <RecipeScreen

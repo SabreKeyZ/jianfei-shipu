@@ -47,6 +47,9 @@ export const WEEK_PLAN: DayMeals[] = [
   },
 ];
 
+export const KCAL_TARGET = 1600;
+export const PROTEIN_TARGET = 100;
+
 export const SLOTS: MealSlot[] = ["breakfast", "lunch", "dinner", "snack"];
 
 export const SLOT_LABEL: Record<MealSlot, string> = {

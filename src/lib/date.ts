@@ -42,9 +42,12 @@ export function formatChineseDate(date: Date): string {
   return `${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
+export function weekdayName(date: Date): string {
+  return WEEKDAY_NAMES[(date.getDay() + 6) % 7];
+}
+
 export function formatFullDate(date: Date): string {
-  const weekday = WEEKDAY_NAMES[(date.getDay() + 6) % 7];
-  return `${date.getFullYear()}年${formatChineseDate(date)} ${weekday}`;
+  return `${date.getFullYear()}年${formatChineseDate(date)} ${weekdayName(date)}`;
 }
 
 export function weekdayShort(date: Date): string {

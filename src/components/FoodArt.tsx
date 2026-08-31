@@ -1,42 +1,51 @@
 import type { FoodArtKind } from "../types";
 
-const TONE: Record<FoodArtKind, { bg: string; ink: string }> = {
-  oats: { bg: "#f3e0b8", ink: "#8a5a28" },
-  toast: { bg: "#f0d4a8", ink: "#8b5a2b" },
-  yogurt: { bg: "#f4e6d4", ink: "#b56a4a" },
-  congee: { bg: "#efe4c8", ink: "#7a5c32" },
-  soy: { bg: "#eee3c6", ink: "#8d6a32" },
-  corn: { bg: "#f6e3a2", ink: "#9a7420" },
-  potato: { bg: "#edc9a3", ink: "#8b4e2a" },
-  chicken: { bg: "#f0d2c2", ink: "#b4583a" },
-  beef: { bg: "#ebcfc4", ink: "#a34732" },
-  pork: { bg: "#f0d4cc", ink: "#a05548" },
-  shrimp: { bg: "#f3d2c6", ink: "#c45b3a" },
-  noodle: { bg: "#efe0b8", ink: "#8a6230" },
-  soup: { bg: "#dce6d4", ink: "#4f6b48" },
-  tofu: { bg: "#ece6d6", ink: "#7a6a4c" },
-  egg: { bg: "#f6e7b8", ink: "#c4842a" },
-  veg: { bg: "#dce8d6", ink: "#4e7a46" },
-  salad: { bg: "#d7ead8", ink: "#3f7a4a" },
-  fruit: { bg: "#f3d6c8", ink: "#c45b45" },
-  nut: { bg: "#ead3b0", ink: "#8a5a28" },
+export const ART_TONE: Record<FoodArtKind, { bg: string; ink: string }> = {
+  oats: { bg: "#F3E6C8", ink: "#8A6230" },
+  toast: { bg: "#F0DDB8", ink: "#8B5A2B" },
+  yogurt: { bg: "#F0E6D4", ink: "#8A6A4A" },
+  congee: { bg: "#EFE4C8", ink: "#7A5C32" },
+  soy: { bg: "#EEE4C8", ink: "#8D6A32" },
+  corn: { bg: "#F4E6A8", ink: "#8A7020" },
+  potato: { bg: "#EED4B4", ink: "#8B5A32" },
+  chicken: { bg: "#F0D8C8", ink: "#8A5340" },
+  beef: { bg: "#EBD4C8", ink: "#8A4A3A" },
+  pork: { bg: "#F0D8D0", ink: "#8A5048" },
+  shrimp: { bg: "#F2D8CC", ink: "#A05840" },
+  noodle: { bg: "#EFE0B8", ink: "#8A6230" },
+  soup: { bg: "#DCE6D4", ink: "#3B7A57" },
+  tofu: { bg: "#EBE6D8", ink: "#7A6A4C" },
+  egg: { bg: "#F4E6B4", ink: "#A07828" },
+  veg: { bg: "#DCE8D6", ink: "#3B7A57" },
+  salad: { bg: "#D8EAD8", ink: "#3B7A57" },
+  fruit: { bg: "#F0DCD0", ink: "#A05848" },
+  nut: { bg: "#E8D4B0", ink: "#8A5A28" },
 };
+
+function Plate() {
+  return (
+    <>
+      <ellipse cx="32" cy="40" rx="22" ry="14" fill="#fff" opacity="0.92" />
+      <ellipse cx="32" cy="39" rx="16" ry="10" fill="currentColor" opacity="0.08" />
+    </>
+  );
+}
 
 export function FoodArt({
   kind,
-  size = 56,
+  size = 88,
 }: {
   kind: FoodArtKind;
   size?: number;
 }) {
-  const tone = TONE[kind];
+  const tone = ART_TONE[kind];
   return (
     <div
       className="food-art"
       style={{ width: size, height: size, background: tone.bg, color: tone.ink }}
       aria-hidden
     >
-      <svg viewBox="0 0 64 64" width={size * 0.72} height={size * 0.72}>
+      <svg viewBox="0 0 64 64" width={size * 0.78} height={size * 0.78}>
         {iconPath(kind)}
       </svg>
     </div>
@@ -48,120 +57,137 @@ function iconPath(kind: FoodArtKind) {
     case "oats":
       return (
         <>
-          <ellipse cx="32" cy="42" rx="20" ry="10" fill="currentColor" opacity="0.18" />
-          <path
-            d="M14 38c0-12 8-22 18-22s18 10 18 22v2H14z"
-            fill="currentColor"
-            opacity="0.35"
-          />
-          <circle cx="24" cy="30" r="3" fill="currentColor" />
-          <circle cx="33" cy="26" r="2.5" fill="currentColor" />
-          <circle cx="40" cy="32" r="3" fill="currentColor" />
+          <Plate />
+          <ellipse cx="32" cy="36" rx="13" ry="8" fill="currentColor" opacity="0.28" />
+          <circle cx="26" cy="34" r="2.2" fill="currentColor" opacity="0.55" />
+          <circle cx="33" cy="32" r="2" fill="currentColor" opacity="0.45" />
+          <circle cx="38" cy="36" r="2.2" fill="currentColor" opacity="0.55" />
+          <path d="M42 28c4-6 8-6 8-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
         </>
       );
     case "toast":
       return (
-        <path
-          d="M16 22c0-6 8-10 16-10s16 4 16 10v22a4 4 0 0 1-4 4H20a4 4 0 0 1-4-4z"
-          fill="currentColor"
-          opacity="0.55"
-        />
+        <>
+          <Plate />
+          <rect x="20" y="22" width="18" height="16" rx="3" fill="currentColor" opacity="0.4" />
+          <ellipse cx="40" cy="34" rx="8" ry="6" fill="currentColor" opacity="0.55" />
+        </>
       );
     case "yogurt":
       return (
         <>
-          <rect x="18" y="22" width="28" height="24" rx="6" fill="currentColor" opacity="0.35" />
-          <ellipse cx="32" cy="22" rx="14" ry="6" fill="currentColor" opacity="0.55" />
+          <rect x="20" y="24" width="24" height="22" rx="6" fill="#fff" opacity="0.95" />
+          <ellipse cx="32" cy="24" rx="12" ry="5" fill="currentColor" opacity="0.35" />
+          <circle cx="28" cy="34" r="2" fill="currentColor" opacity="0.45" />
+          <circle cx="35" cy="37" r="2.2" fill="currentColor" opacity="0.4" />
         </>
       );
     case "congee":
     case "soup":
       return (
         <>
-          <path
-            d="M10 30h44c-1 12-10 20-22 20S11 42 10 30z"
-            fill="currentColor"
-            opacity="0.4"
-          />
-          <path d="M16 26c4-8 28-8 32 0" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M12 32h40c-1 13-9 20-20 20S13 45 12 32z" fill="#fff" opacity="0.95" />
+          <ellipse cx="32" cy="32" rx="18" ry="6" fill="currentColor" opacity="0.2" />
+          <path d="M20 26c3-6 8-8 12-4M36 24c3-5 8-6 10-2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" opacity="0.45" />
         </>
       );
     case "soy":
       return (
-        <path
-          d="M24 12h16l4 10v26a8 8 0 0 1-8 8H28a8 8 0 0 1-8-8V22z"
-          fill="currentColor"
-          opacity="0.45"
-        />
+        <>
+          <path d="M26 14h12l3 8v26a7 7 0 0 1-7 7H30a7 7 0 0 1-7-7V22z" fill="#fff" opacity="0.95" />
+          <rect x="26" y="28" width="12" height="14" rx="2" fill="currentColor" opacity="0.2" />
+        </>
       );
     case "corn":
       return (
-        <ellipse cx="32" cy="34" rx="10" ry="20" fill="currentColor" opacity="0.5" />
+        <>
+          <Plate />
+          <ellipse cx="32" cy="34" rx="8" ry="16" fill="currentColor" opacity="0.45" />
+          <path d="M24 24c4 2 4 8 0 12M40 24c-4 2-4 8 0 12" fill="none" stroke="currentColor" strokeWidth="2" opacity="0.35" />
+        </>
       );
     case "potato":
       return (
-        <ellipse cx="32" cy="34" rx="18" ry="14" fill="currentColor" opacity="0.5" />
+        <>
+          <Plate />
+          <ellipse cx="28" cy="36" rx="11" ry="8" fill="currentColor" opacity="0.4" />
+          <ellipse cx="40" cy="34" rx="7" ry="6" fill="currentColor" opacity="0.28" />
+        </>
       );
     case "chicken":
     case "beef":
     case "pork":
       return (
-        <path
-          d="M14 36c4-14 32-18 38-4 3 8-6 20-18 20-10 0-22-6-20-16z"
-          fill="currentColor"
-          opacity="0.45"
-        />
+        <>
+          <Plate />
+          <path d="M18 36c3-10 22-14 28-4 2 6-4 14-14 14-9 0-16-4-14-10z" fill="currentColor" opacity="0.42" />
+          <path d="M22 40c6 2 16 2 22-2" fill="none" stroke="#fff" strokeWidth="1.6" opacity="0.7" />
+        </>
       );
     case "shrimp":
       return (
-        <path
-          d="M14 40c2-16 20-24 32-16 4 3 6 8 2 12-8 8-22 10-34 4z"
-          fill="currentColor"
-          opacity="0.5"
-        />
+        <>
+          <Plate />
+          <path d="M16 38c2-12 16-18 26-12 4 2 5 7 2 10-7 7-18 8-28 2z" fill="currentColor" opacity="0.45" />
+          <circle cx="40" cy="28" r="1.6" fill="#fff" />
+        </>
       );
     case "noodle":
       return (
         <>
-          <ellipse cx="32" cy="40" rx="20" ry="10" fill="currentColor" opacity="0.25" />
+          <path d="M12 34h40c-1 12-9 18-20 18S13 46 12 34z" fill="#fff" opacity="0.95" />
           <path
-            d="M16 28c8 6 24-6 32 4M14 34c10 6 24-4 34 2"
+            d="M18 30c8 5 20-5 28 3M16 35c10 5 22-3 30 2"
             fill="none"
             stroke="currentColor"
-            strokeWidth="3"
+            strokeWidth="2.4"
             strokeLinecap="round"
+            opacity="0.45"
           />
         </>
       );
     case "tofu":
       return (
-        <rect x="16" y="20" width="32" height="26" rx="4" fill="currentColor" opacity="0.4" />
+        <>
+          <Plate />
+          <rect x="20" y="26" width="14" height="12" rx="2" fill="#fff" />
+          <rect x="32" y="30" width="12" height="10" rx="2" fill="currentColor" opacity="0.28" />
+        </>
       );
     case "egg":
       return (
-        <ellipse cx="32" cy="34" rx="13" ry="16" fill="currentColor" opacity="0.5" />
+        <>
+          <Plate />
+          <ellipse cx="32" cy="34" rx="12" ry="10" fill="#fff" />
+          <circle cx="32" cy="34" r="5" fill="currentColor" opacity="0.45" />
+        </>
       );
     case "veg":
     case "salad":
       return (
-        <path
-          d="M32 48c-10-6-16-18-8-28 8 4 10 10 8 28zm0 0c10-6 16-18 8-28-8 4-10 10-8 28z"
-          fill="currentColor"
-          opacity="0.5"
-        />
+        <>
+          <Plate />
+          <path d="M32 44c-8-4-12-12-6-20 6 3 8 8 6 20zm0 0c8-4 12-12 6-20-6 3-8 8-6 20z" fill="currentColor" opacity="0.42" />
+          <path d="M32 44V26" stroke="currentColor" strokeWidth="2" opacity="0.35" />
+        </>
       );
     case "fruit":
       return (
         <>
-          <circle cx="32" cy="36" r="14" fill="currentColor" opacity="0.5" />
-          <path d="M32 22c4-8 10-8 10-8" fill="none" stroke="currentColor" strokeWidth="3" />
+          <Plate />
+          <circle cx="32" cy="34" r="11" fill="currentColor" opacity="0.42" />
+          <path d="M32 24c3-6 8-6 8-6" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
         </>
       );
     case "nut":
       return (
-        <ellipse cx="32" cy="34" rx="12" ry="16" fill="currentColor" opacity="0.5" />
+        <>
+          <Plate />
+          <ellipse cx="27" cy="35" rx="6" ry="8" fill="currentColor" opacity="0.4" />
+          <ellipse cx="38" cy="36" rx="5" ry="7" fill="currentColor" opacity="0.3" />
+        </>
       );
     default:
-      return <circle cx="32" cy="32" r="14" fill="currentColor" opacity="0.4" />;
+      return <Plate />;
   }
 }
