@@ -1,3 +1,6 @@
+import { useState } from "react";
+import { FilterChips } from "../components/FilterChips";
+import { MacroRow } from "../components/MacroRow";
 import { MealCard } from "../components/MealCard";
 import { SLOTS } from "../data/plan";
 import {
@@ -9,27 +12,35 @@ import {
   weekdayShort,
 } from "../lib/date";
 import { dayMacros, recipesForDate } from "../lib/meals";
+import type { Profile } from "../lib/profile";
+import { matchesFilter, type MenuFilter } from "../lib/tags";
 import type { Recipe } from "../types";
 
 export function WeekScreen({
   today,
   selected,
+  profile,
   onSelect,
   onOpen,
 }: {
   today: Date;
   selected: Date;
+  profile: Profile;
   onSelect: (date: Date) => void;
   onOpen: (recipe: Recipe, date: Date) => void;
 }) {
+  const [filter, setFilter] = useState<MenuFilter>("all");
   const days = weekDates(today);
-  const recipes = recipesForDate(selected);
-  const macros = dayMacros(selected);
+  const recipes = recipesForDate(profile, selected);
+  const macros = dayMacros(profile, selected);
+  const visible = SLOTS.map((slot) => recipes[slot]).filter((recipe) =>
+    matchesFilter(recipe, filter),
+  );
 
   return (
     <section className="page">
       <header className="page-head">
-        <p className="date-line">周一到周日，固定循环</p>
+        <p className="date-line">按你的身体数据，每天单独排</p>
         <h1>一周都安排好了</h1>
       </header>
 
@@ -58,19 +69,26 @@ export function WeekScreen({
         <p>
           {formatChineseDate(selected)} {weekdayName(selected)}
         </p>
-        <strong>
-          {macros.kcal} 千卡 · 蛋白 {macros.protein} 克
-        </strong>
+        <MacroRow macros={macros} compact />
       </div>
 
+      <FilterChips value={filter} onChange={setFilter} />
+
       <div className="meal-list">
-        {SLOTS.map((slot) => (
-          <MealCard
-            key={slot}
-            recipe={recipes[slot]}
-            onOpen={() => onOpen(recipes[slot], selected)}
-          />
-        ))}
+        {visible.length === 0 ? (
+          <div className="empty-state">
+            <p>这一天没有符合筛选的菜</p>
+            <span>换个筛选，或点另一天</span>
+          </div>
+        ) : (
+          visible.map((recipe) => (
+            <MealCard
+              key={recipe.slot}
+              recipe={recipe}
+              onOpen={() => onOpen(recipe, selected)}
+            />
+          ))
+        )}
       </div>
     </section>
   );

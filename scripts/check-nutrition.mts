@@ -1,37 +1,71 @@
 import { recipeMacros } from "../src/data/nutrition.ts";
-import { WEEK_PLAN } from "../src/data/plan.ts";
-import { getRecipe, RECIPES, recipesBySlot } from "../src/data/recipes.ts";
-import type { MealSlot } from "../src/types.ts";
+import { SLOTS } from "../src/data/plan.ts";
+import { RECIPES, recipesBySlot } from "../src/data/recipes.ts";
+import { generateDay } from "../src/lib/generate.ts";
+import { DEMO_PROFILE, targetsOf, type Profile } from "../src/lib/profile.ts";
 
-const slots: MealSlot[] = ["breakfast", "lunch", "dinner", "snack"];
-const names = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+const date = new Date(2026, 7, 31);
+
+const light: Profile = { ...DEMO_PROFILE, source: "user" };
+const heavy: Profile = {
+  heightCm: 180,
+  weightKg: 82,
+  age: 32,
+  sex: "male",
+  goal: "cut",
+  source: "user",
+};
+const elder: Profile = {
+  heightCm: 168,
+  weightKg: 66,
+  age: 62,
+  sex: "male",
+  goal: "maintain",
+  source: "user",
+};
 
 console.log(`食谱总数 ${RECIPES.length}`);
-for (const slot of slots) {
+for (const slot of SLOTS) {
   console.log(`${slot} ${recipesBySlot(slot).length} 道`);
 }
 
-const unique = new Set(RECIPES.map((r) => r.name));
-if (unique.size !== RECIPES.length) {
-  throw new Error("食谱名称有重复");
-}
+const names = new Set(RECIPES.map((r) => r.name));
+if (names.size !== RECIPES.length) throw new Error("食谱名称有重复");
 
-for (const [i, day] of WEEK_PLAN.entries()) {
+function menuLine(label: string, profile: Profile) {
+  const day = generateDay(profile, date);
+  const target = targetsOf(profile);
   let kcal = 0;
   let protein = 0;
-  for (const slot of slots) {
-    const recipe = getRecipe(day[slot]);
+  const dishes: string[] = [];
+  for (const slot of SLOTS) {
+    const recipe = day.recipes[slot];
     const m = recipeMacros(recipe);
     kcal += m.kcal;
     protein += m.protein;
+    dishes.push(recipe.name);
+    if (m.kcal <= 0 || m.protein < 0 || m.carbs < 0 || m.fat < 0) {
+      throw new Error(`${recipe.name} 缺宏量营养`);
+    }
   }
-  console.log(`${names[i]} ${kcal} 千卡 / 蛋白 ${protein} 克`);
-  if (kcal < 1400 || kcal > 1600) {
-    throw new Error(`${names[i]} 热量 ${kcal} 不在 1400-1600`);
+  const gap = Math.abs(kcal - target.kcal);
+  console.log(
+    `${label} 目标${target.kcal} 实际${kcal} 差${gap} 蛋白${protein}/${target.protein} | ${dishes.join(" / ")}`,
+  );
+  if (gap > 120) {
+    throw new Error(`${label} 偏离目标 ${gap}`);
   }
-  if (protein < 90 || protein > 110) {
-    throw new Error(`${names[i]} 蛋白质 ${protein} 不在 90-110`);
-  }
+  return dishes.join("|");
 }
 
-console.log("营养校验通过");
+const a = menuLine("轻女减脂", light);
+const b = menuLine("高个男减脂", heavy);
+const c = menuLine("年长男维持", elder);
+if (a === b || a === c || b === c) {
+  throw new Error("不同身材排出了同一套菜");
+}
+
+const again = menuLine("轻女减脂复算", light);
+if (again !== a) throw new Error("同一人同一天菜单不稳定");
+
+console.log("个性化菜单校验通过");

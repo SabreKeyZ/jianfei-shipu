@@ -1,30 +1,44 @@
 import { useRef, useState } from "react";
 import { ART_TONE, FoodArt } from "../components/FoodArt";
-import { recipeMacros } from "../data/nutrition";
-import { nextSwapId, SLOT_LABEL } from "../data/plan";
+import { MacroRow } from "../components/MacroRow";
+import { recipeMacros, roundMacros } from "../data/nutrition";
+import { SLOT_LABEL } from "../data/plan";
+import { formatAmount } from "../lib/amounts";
+import { nextFitSwap } from "../lib/generate";
+import { dayPlan } from "../lib/meals";
 import { getRecipe } from "../data/recipes";
 import { toDateKey } from "../lib/date";
-import { mealsForDate } from "../lib/meals";
+import type { Profile } from "../lib/profile";
 import { saveDaySwap } from "../lib/storage";
 import type { Recipe as RecipeType } from "../types";
 
 export function RecipeScreen({
   recipeId,
   date,
+  profile,
   onBack,
   onSwapped,
 }: {
   recipeId: string;
   date: Date;
+  profile: Profile;
   onBack: () => void;
   onSwapped: (recipe: RecipeType) => void;
 }) {
   const [toast, setToast] = useState("");
   const [started, setStarted] = useState(false);
   const stepsRef = useRef<HTMLDivElement>(null);
-  const recipe = getRecipe(recipeId);
+  const planned = Object.values(dayPlan(profile, date).recipes).find((item) => item.id === recipeId);
+  const recipe = planned ?? getRecipe(recipeId);
   const macros = recipeMacros(recipe);
   const tone = ART_TONE[recipe.art];
+  const grams = recipe.ingredients.reduce((sum, item) => sum + item.grams, 0);
+  const per100 = roundMacros({
+    kcal: (macros.kcal / Math.max(grams, 1)) * 100,
+    protein: (macros.protein / Math.max(grams, 1)) * 100,
+    carbs: (macros.carbs / Math.max(grams, 1)) * 100,
+    fat: (macros.fat / Math.max(grams, 1)) * 100,
+  });
 
   function showToast(text: string) {
     setToast(text);
@@ -32,10 +46,8 @@ export function RecipeScreen({
   }
 
   function swap() {
-    const current = mealsForDate(date)[recipe.slot];
-    const nextId = nextSwapId(recipe.slot, current);
-    saveDaySwap(toDateKey(date), recipe.slot, nextId);
-    const next = getRecipe(nextId);
+    const next = nextFitSwap(profile, date, recipe.slot, recipe.id);
+    saveDaySwap(toDateKey(date), recipe.slot, next.id);
     setStarted(false);
     onSwapped(next);
     showToast(`已换成「${next.name}」`);
@@ -64,31 +76,17 @@ export function RecipeScreen({
             {recipe.minutes} 分钟 · 1 人份
           </p>
 
-          <div className="macro-row">
-            <div>
-              <b>{macros.kcal}</b>
-              <span>千卡</span>
-            </div>
-            <div>
-              <b>{macros.protein}</b>
-              <span>蛋白质</span>
-            </div>
-            <div>
-              <b>{macros.carbs}</b>
-              <span>碳水</span>
-            </div>
-            <div>
-              <b>{macros.fat}</b>
-              <span>脂肪</span>
-            </div>
-          </div>
+          <MacroRow macros={macros} />
+          <p className="per100">
+            每 100g 大约 {per100.kcal} 千卡 · 蛋白 {per100.protein}g · 碳水 {per100.carbs}g · 脂肪 {per100.fat}g
+          </p>
 
           <h2>食材</h2>
           <ul className="chip-list">
             {recipe.ingredients.map((item) => (
               <li key={item.name}>
                 <span>{item.name}</span>
-                <em>{item.amount}</em>
+                <em>{formatAmount(item.name, item.food, item.grams)}</em>
               </li>
             ))}
           </ul>

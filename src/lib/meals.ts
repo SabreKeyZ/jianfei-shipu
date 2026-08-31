@@ -1,33 +1,22 @@
 import { recipeMacros, roundMacros, sumMacros } from "../data/nutrition";
-import { defaultMealsForDate, SLOTS } from "../data/plan";
-import { getRecipe } from "../data/recipes";
-import type { DayMeals, GroceryGroup, Ingredient, Macros, MealSlot, Recipe, SlotSwaps } from "../types";
+import { SLOTS } from "../data/plan";
+import type { GroceryGroup, Ingredient, Macros, MealSlot, Recipe } from "../types";
+import { displayGroceryAmount } from "./amounts";
 import { toDateKey, weekDates } from "./date";
+import { dayFromProfile, type GeneratedDay } from "./generate";
+import type { Profile } from "./profile";
 import { loadSwaps } from "./storage";
 
-export function mealsForDate(date: Date, swaps?: Record<string, SlotSwaps>): DayMeals {
-  const base = defaultMealsForDate(date);
-  const daySwaps = (swaps ?? loadSwaps())[toDateKey(date)] ?? {};
-  return {
-    breakfast: daySwaps.breakfast ?? base.breakfast,
-    lunch: daySwaps.lunch ?? base.lunch,
-    dinner: daySwaps.dinner ?? base.dinner,
-    snack: daySwaps.snack ?? base.snack,
-  };
+export function dayPlan(profile: Profile, date: Date): GeneratedDay {
+  return dayFromProfile(profile, date, loadSwaps());
 }
 
-export function recipesForDate(date: Date, swaps?: Record<string, SlotSwaps>): Record<MealSlot, Recipe> {
-  const meals = mealsForDate(date, swaps);
-  return {
-    breakfast: getRecipe(meals.breakfast),
-    lunch: getRecipe(meals.lunch),
-    dinner: getRecipe(meals.dinner),
-    snack: getRecipe(meals.snack),
-  };
+export function recipesForDate(profile: Profile, date: Date): Record<MealSlot, Recipe> {
+  return dayPlan(profile, date).recipes;
 }
 
-export function dayMacros(date: Date, swaps?: Record<string, SlotSwaps>): Macros {
-  const recipes = recipesForDate(date, swaps);
+export function dayMacros(profile: Profile, date: Date): Macros {
+  const recipes = recipesForDate(profile, date);
   return roundMacros(sumMacros(SLOTS.map((slot) => recipeMacros(recipes[slot]))));
 }
 
@@ -57,33 +46,21 @@ function mergeIngredients(list: Ingredient[]): GroceryItem[] {
 
   return [...map.entries()].map(([name, items]) => {
     const grams = items.reduce((sum, item) => sum + item.grams, 0);
-    const amount =
-      items.length === 1 ? items[0].amount : mergeAmount(name, items, grams);
-    return { name, amount, grams, group: items[0].group };
+    return {
+      name,
+      amount: displayGroceryAmount(name, items[0].food, grams),
+      grams,
+      group: items[0].group,
+    };
   });
 }
 
-function mergeAmount(name: string, items: Ingredient[], grams: number): string {
-  if (items.every((item) => item.amount.includes("克"))) {
-    return `${Math.round(grams)} 克`;
-  }
-  if (items.every((item) => item.amount.includes("毫升"))) {
-    return `${Math.round(grams)} 毫升`;
-  }
-  if (name.includes("鸡蛋") || name === "茶叶蛋") {
-    const count = items.reduce((sum, item) => {
-      const matched = item.amount.match(/(\d+)/);
-      return sum + (matched ? Number(matched[1]) : 1);
-    }, 0);
-    return `${count} 个`;
-  }
-  return items.map((item) => item.amount).join(" + ");
-}
-
-export function groceryForDates(dates: Date[]): { group: GroceryGroup; items: GroceryItem[] }[] {
-  const swaps = loadSwaps();
+export function groceryForDates(
+  profile: Profile,
+  dates: Date[],
+): { group: GroceryGroup; items: GroceryItem[] }[] {
   const ingredients = dates.flatMap((date) =>
-    SLOTS.flatMap((slot) => recipesForDate(date, swaps)[slot].ingredients),
+    SLOTS.flatMap((slot) => recipesForDate(profile, date)[slot].ingredients),
   );
   const merged = mergeIngredients(ingredients).sort((a, b) => a.name.localeCompare(b.name, "zh-CN"));
   return GROUP_ORDER.map((group) => ({
@@ -92,10 +69,30 @@ export function groceryForDates(dates: Date[]): { group: GroceryGroup; items: Gr
   })).filter((section) => section.items.length > 0);
 }
 
-export function groceryForToday(date: Date) {
-  return groceryForDates([date]);
+export function groceryForToday(profile: Profile, date: Date) {
+  return groceryForDates(profile, [date]);
 }
 
-export function groceryForWeek(date: Date) {
-  return groceryForDates(weekDates(date));
+export function groceryForWeek(profile: Profile, date: Date) {
+  return groceryForDates(profile, weekDates(date));
+}
+
+export function streakDays(eaten: Record<string, Partial<Record<MealSlot, boolean>>>, today: Date): number {
+  let count = 0;
+  const cursor = new Date(today);
+  for (let i = 0; i < 60; i += 1) {
+    const key = toDateKey(cursor);
+    const day = eaten[key];
+    const done = Boolean(day?.breakfast && day.lunch && day.dinner);
+    if (!done) {
+      if (i === 0) {
+        cursor.setDate(cursor.getDate() - 1);
+        continue;
+      }
+      break;
+    }
+    count += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return count;
 }
