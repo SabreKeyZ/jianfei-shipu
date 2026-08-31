@@ -745,6 +745,80 @@ export const RECIPES: Recipe[] = [
     ],
     tip: "熟软的番茄更甜，生青的容易倒牙。",
   },
+  {
+    id: "s-yogurt-banana",
+    name: "无糖酸奶配香蕉",
+    slot: "snack",
+    minutes: 2,
+    art: "yogurt",
+    ingredients: [
+      i("无糖原味酸奶", "200 克", "yogurt", 200, "staple"),
+      i("香蕉", "1 根", "banana", 90, "veg"),
+    ],
+    steps: [
+      "香蕉切片，铺在酸奶上。",
+      "不放蜂蜜。下午或晚饭后加餐刚好。",
+    ],
+    tip: "比单吃酸奶更扛饿，也比单吃香蕉多一点蛋白质。",
+  },
+  {
+    id: "l-chicken-cabbage-rice",
+    name: "手撕鸡胸配白菜和饭",
+    slot: "lunch",
+    minutes: 18,
+    art: "chicken",
+    ingredients: [
+      i("鸡胸肉", "170 克", "chicken_breast", 170, "protein"),
+      i("白菜", "180 克", "cabbage", 180, "veg"),
+      i("米饭", "180 克", "rice", 180, "staple"),
+      i("姜", "6 克", "ginger", 6, "seasoning"),
+      i("生抽", "8 克", "soy_sauce", 8, "seasoning"),
+      i("小葱", "6 克", "scallion", 6, "seasoning"),
+    ],
+    steps: [
+      "鸡胸冷水下锅，加姜片，水开后再煮 8 分钟，捞出晾凉撕丝。",
+      "白菜洗净切段，开水焯 40 秒，沥干。",
+      "鸡丝和白菜加生抽、葱花拌匀。配一小碗饭。",
+    ],
+    tip: "煮熟手撕，不放油，蛋白质很干净。",
+  },
+  {
+    id: "d-boiled-shrimp-lettuce",
+    name: "白灼虾仁配蒜蓉生菜",
+    slot: "dinner",
+    minutes: 12,
+    art: "shrimp",
+    ingredients: [
+      i("虾仁", "140 克", "shrimp", 140, "protein"),
+      i("生菜", "180 克", "lettuce", 180, "veg"),
+      i("蒜", "8 克", "garlic", 8, "seasoning"),
+      i("生抽", "6 克", "soy_sauce", 6, "seasoning"),
+    ],
+    steps: [
+      "虾仁洗净，开水下锅煮到变红弯起，大约 2 分钟，捞出。",
+      "生菜撕开，开水焯 20 秒。",
+      "蒜末加几滴生抽拌生菜，虾仁摆旁边。晚饭不配饭。",
+    ],
+    tip: "白灼几乎不放油，适合减脂日的晚上。",
+  },
+  {
+    id: "b-millet-egg-cuke",
+    name: "小米粥配茶叶蛋和黄瓜",
+    slot: "breakfast",
+    minutes: 22,
+    art: "congee",
+    ingredients: [
+      i("小米", "45 克", "millet_dry", 45, "staple"),
+      i("茶叶蛋", "2 个", "egg", 100, "protein"),
+      i("黄瓜", "100 克", "cucumber", 100, "veg"),
+    ],
+    steps: [
+      "小米淘洗，加水约 500 毫升，大火烧开转小火煮 15 分钟。",
+      "茶叶蛋剖开。黄瓜拍段。",
+      "粥里只放一小撮盐，配蛋和黄瓜。",
+    ],
+    tip: "软、好消化，年纪大一点或肠胃弱的早上很合适。",
+  },
 ];
 
 export const RECIPE_BY_ID: Record<string, Recipe> = Object.fromEntries(

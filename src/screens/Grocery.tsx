@@ -1,15 +1,24 @@
 import { useMemo, useState } from "react";
 import { toDateKey } from "../lib/date";
 import { GROUP_LABEL, groceryForToday, groceryForWeek } from "../lib/meals";
+import type { Profile } from "../lib/profile";
 import { loadChecked, loadGroceryScope, saveChecked, saveGroceryScope } from "../lib/storage";
 
-export function GroceryScreen({ today, revision }: { today: Date; revision: number }) {
+export function GroceryScreen({
+  today,
+  profile,
+  revision,
+}: {
+  today: Date;
+  profile: Profile;
+  revision: number;
+}) {
   const [scope, setScope] = useState<"today" | "week">(loadGroceryScope);
   const [checked, setChecked] = useState<Record<string, boolean>>(loadChecked);
 
   const sections = useMemo(
-    () => (scope === "today" ? groceryForToday(today) : groceryForWeek(today)),
-    [scope, today, revision],
+    () => (scope === "today" ? groceryForToday(profile, today) : groceryForWeek(profile, today)),
+    [scope, today, revision, profile],
   );
 
   const prefix = scope === "today" ? `d:${toDateKey(today)}` : "w";
@@ -37,7 +46,7 @@ export function GroceryScreen({ today, revision }: { today: Date; revision: numb
   return (
     <section className="page">
       <header className="page-head">
-        <p className="date-line">{scope === "today" ? "只买今天的" : "这一周的量"}</p>
+        <p className="date-line">{scope === "today" ? "只买今天的，重复的已加总" : "这一周的量，重复的已加总"}</p>
         <h1>去菜市场转一圈</h1>
       </header>
 
