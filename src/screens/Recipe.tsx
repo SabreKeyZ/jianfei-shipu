@@ -1,29 +1,38 @@
 import { useRef, useState } from "react";
-import { ART_TONE, FoodArt } from "../components/FoodArt";
+import { DishPhoto } from "../components/DishPhoto";
+import { HeartButton } from "../components/HeartButton";
 import { MacroRow } from "../components/MacroRow";
 import { recipeMacros, roundMacros } from "../data/nutrition";
-import { SLOT_LABEL } from "../data/plan";
+import { SLOT_LABEL, SLOTS } from "../data/plan";
+import { getRecipe } from "../data/recipes";
 import { formatAmount } from "../lib/amounts";
+import { toDateKey } from "../lib/date";
 import { nextFitSwap } from "../lib/generate";
 import { dayPlan } from "../lib/meals";
-import { getRecipe } from "../data/recipes";
-import { toDateKey } from "../lib/date";
 import type { Profile } from "../lib/profile";
 import { saveDaySwap } from "../lib/storage";
-import type { Recipe as RecipeType } from "../types";
+import type { MealSlot, Recipe as RecipeType } from "../types";
 
 export function RecipeScreen({
   recipeId,
   date,
+  today,
   profile,
+  favorite,
   onBack,
   onSwapped,
+  onAssigned,
+  onToggleFavorite,
 }: {
   recipeId: string;
   date: Date;
+  today: Date;
   profile: Profile;
+  favorite: boolean;
   onBack: () => void;
   onSwapped: (recipe: RecipeType) => void;
+  onAssigned: () => void;
+  onToggleFavorite: () => void;
 }) {
   const [toast, setToast] = useState("");
   const [started, setStarted] = useState(false);
@@ -31,7 +40,6 @@ export function RecipeScreen({
   const planned = Object.values(dayPlan(profile, date).recipes).find((item) => item.id === recipeId);
   const recipe = planned ?? getRecipe(recipeId);
   const macros = recipeMacros(recipe);
-  const tone = ART_TONE[recipe.art];
   const grams = recipe.ingredients.reduce((sum, item) => sum + item.grams, 0);
   const per100 = roundMacros({
     kcal: (macros.kcal / Math.max(grams, 1)) * 100,
@@ -53,6 +61,12 @@ export function RecipeScreen({
     showToast(`已换成「${next.name}」`);
   }
 
+  function assignToToday(slot: MealSlot) {
+    saveDaySwap(toDateKey(today), slot, recipe.id);
+    onAssigned();
+    showToast(`已换到今日${SLOT_LABEL[slot]}`);
+  }
+
   function startCook() {
     setStarted(true);
     stepsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -62,19 +76,21 @@ export function RecipeScreen({
   return (
     <section className="recipe-page">
       <div className="recipe-scroll">
-        <div className="recipe-bleed" style={{ background: tone.bg, color: tone.ink }}>
+        <div className="recipe-hero">
+          <DishPhoto recipe={recipe} className="recipe-hero-img" eager />
           <button type="button" className="back-float" onClick={onBack}>
             返回
           </button>
+          <HeartButton on={favorite} onToggle={onToggleFavorite} className="hero-heart" />
           <span className="bleed-slot">{SLOT_LABEL[recipe.slot]}</span>
-          <FoodArt kind={recipe.art} size={148} />
         </div>
 
         <div className="recipe-body">
           <h1>{recipe.name}</h1>
-          <p className="recipe-sub">
-            {recipe.minutes} 分钟 · 1 人份
-          </p>
+          <div className="recipe-meta">
+            <span className="time-chip">{recipe.minutes} 分钟</span>
+            <span>1 人份</span>
+          </div>
 
           <MacroRow macros={macros} />
           <p className="per100">
@@ -107,6 +123,17 @@ export function RecipeScreen({
             <strong>减脂小技巧</strong>
             <p>{recipe.tip}</p>
           </aside>
+
+          <div className="assign-block">
+            <p>换到今日</p>
+            <div className="assign-row">
+              {SLOTS.filter((slot) => slot !== "snack" || recipe.slot === "snack").map((slot) => (
+                <button key={slot} type="button" className="assign-chip" onClick={() => assignToToday(slot)}>
+                  {SLOT_LABEL[slot]}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

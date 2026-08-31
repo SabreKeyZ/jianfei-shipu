@@ -20,14 +20,18 @@ export function WeekScreen({
   today,
   selected,
   profile,
+  favorites,
   onSelect,
   onOpen,
+  onToggleFavorite,
 }: {
   today: Date;
   selected: Date;
   profile: Profile;
+  favorites: string[];
   onSelect: (date: Date) => void;
   onOpen: (recipe: Recipe, date: Date) => void;
+  onToggleFavorite: (id: string) => void;
 }) {
   const [filter, setFilter] = useState<MenuFilter>("all");
   const days = weekDates(today);
@@ -85,7 +89,9 @@ export function WeekScreen({
             <MealCard
               key={recipe.slot}
               recipe={recipe}
+              favorite={favorites.includes(recipe.id)}
               onOpen={() => onOpen(recipe, selected)}
+              onToggleFavorite={() => onToggleFavorite(recipe.id)}
             />
           ))
         )}

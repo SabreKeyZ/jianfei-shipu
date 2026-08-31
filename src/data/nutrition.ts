@@ -56,6 +56,19 @@ export const FOOD_PER_100G: Record<string, Macros> = {
   vinegar: { kcal: 18, protein: 0.3, carbs: 0.9, fat: 0 },
   sesame: { kcal: 565, protein: 18.2, carbs: 24.0, fat: 49.7 },
   nori: { kcal: 207, protein: 26.3, carbs: 44.3, fat: 1.1 },
+  sea_bass: { kcal: 105, protein: 18.6, carbs: 0, fat: 3.4 },
+  pork_rib: { kcal: 178, protein: 18.3, carbs: 0, fat: 11.4 },
+  mixed_rice: { kcal: 118, protein: 3.2, carbs: 24.5, fat: 0.8 },
+  tofu_gan: { kcal: 142, protein: 16.2, carbs: 4.1, fat: 6.8 },
+  bean_sprout: { kcal: 18, protein: 2.1, carbs: 2.4, fat: 0.1 },
+  celery: { kcal: 16, protein: 0.8, carbs: 3.0, fat: 0.2 },
+  chive: { kcal: 27, protein: 2.4, carbs: 3.2, fat: 0.6 },
+  water_spinach: { kcal: 23, protein: 2.2, carbs: 3.1, fat: 0.3 },
+  carrot: { kcal: 37, protein: 0.9, carbs: 8.1, fat: 0.2 },
+  onion: { kcal: 39, protein: 1.1, carbs: 9.0, fat: 0.1 },
+  oyster_sauce: { kcal: 51, protein: 1.4, carbs: 10.8, fat: 0.2 },
+  edamame: { kcal: 121, protein: 11.5, carbs: 8.5, fat: 5.2 },
+  lotus_root: { kcal: 54, protein: 1.9, carbs: 12.4, fat: 0.1 },
 };
 
 export function ingredientMacros(item: Ingredient): Macros {

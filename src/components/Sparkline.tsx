@@ -16,7 +16,7 @@ export function Sparkline({ values }: { values: number[] }) {
     })
     .join(" ");
   return (
-    <svg className="spark" viewBox={`0 0 ${w} ${h}`} width="160" height="36" aria-hidden>
+    <svg className="spark" viewBox={`0 0 ${w} ${h}`} width="100%" height="36" aria-hidden>
       <path d={d} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );

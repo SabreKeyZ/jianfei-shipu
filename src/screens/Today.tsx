@@ -9,7 +9,14 @@ import { formatChineseDate, toDateKey, weekdayName } from "../lib/date";
 import { generateDay } from "../lib/generate";
 import { dayMacros, recipesForDate, streakDays } from "../lib/meals";
 import { kgToJin, type Profile } from "../lib/profile";
+import { copyText, todayShareText } from "../lib/share";
 import type { EatenMap } from "../lib/storage";
+import {
+  loadPwaHintDismissed,
+  loadWater,
+  savePwaHintDismissed,
+  saveWater,
+} from "../lib/storage";
 import { matchesFilter, type MenuFilter } from "../lib/tags";
 import type { MealSlot, Recipe } from "../types";
 
@@ -18,8 +25,10 @@ export function TodayScreen({
   profile,
   eaten,
   weights,
+  favorites,
   onOpen,
   onToggleEaten,
+  onToggleFavorite,
   onOpenSettings,
   onSaveWeight,
 }: {
@@ -27,12 +36,16 @@ export function TodayScreen({
   profile: Profile;
   eaten: EatenMap;
   weights: Record<string, number>;
+  favorites: string[];
   onOpen: (recipe: Recipe) => void;
   onToggleEaten: (slot: MealSlot) => void;
+  onToggleFavorite: (id: string) => void;
   onOpenSettings: () => void;
   onSaveWeight: (jin: number) => void;
 }) {
   const [filter, setFilter] = useState<MenuFilter>("all");
+  const [toast, setToast] = useState("");
+  const [pwaHint, setPwaHint] = useState(() => !loadPwaHintDismissed());
   const recipes = recipesForDate(profile, date);
   const macros = dayMacros(profile, date);
   const generated = generateDay(profile, date);
@@ -40,13 +53,46 @@ export function TodayScreen({
   const dayEaten = eaten[key] ?? {};
   const streak = streakDays(eaten, date);
   const [jin, setJin] = useState(String(weights[key] ?? kgToJin(profile.weightKg)));
+  const [water, setWater] = useState(() => clampCups(loadWater()[key] ?? 0));
   const spark = lastSevenWeights(weights, date);
   const visible = SLOTS.map((slot) => recipes[slot]).filter((recipe) =>
     matchesFilter(recipe, filter),
   );
 
+  function showToast(text: string) {
+    setToast(text);
+    window.setTimeout(() => setToast(""), 2200);
+  }
+
+  async function shareMenu() {
+    const text = todayShareText(recipes, macros.kcal);
+    const ok = await copyText(text);
+    showToast(ok ? "已复制，去微信粘贴" : "复制失败，请长按选择文字");
+  }
+
+  function setCups(next: number) {
+    const cups = clampCups(next);
+    setWater(cups);
+    const all = loadWater();
+    saveWater({ ...all, [key]: cups });
+  }
+
+  function dismissPwa() {
+    savePwaHintDismissed();
+    setPwaHint(false);
+  }
+
   return (
     <section className="page">
+      {pwaHint ? (
+        <p className="pwa-hint">
+          <span>加到主屏幕，明天打开就是今日菜单</span>
+          <button type="button" onClick={dismissPwa} aria-label="关闭">
+            知道了
+          </button>
+        </p>
+      ) : null}
+
       <header className="page-head row-head">
         <div>
           <p className="date-line">
@@ -55,9 +101,14 @@ export function TodayScreen({
           </p>
           <h1>今天轻松吃</h1>
         </div>
-        <button type="button" className="gear" onClick={onOpenSettings}>
-          身体数据
-        </button>
+        <div className="head-actions">
+          <button type="button" className="gear" onClick={() => void shareMenu()}>
+            分享菜单
+          </button>
+          <button type="button" className="gear" onClick={onOpenSettings}>
+            身体数据
+          </button>
+        </div>
       </header>
 
       <div className="hero-card">
@@ -74,20 +125,52 @@ export function TodayScreen({
           {profile.source === "demo" ? " · 示例" : ""}
         </p>
         <MacroRow macros={macros} />
-        <div className="weight-row">
-          <span>体重</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={jin}
-            onChange={(e) => setJin(e.target.value)}
-          />
-          <em>斤</em>
-          <button type="button" className="mini-btn" onClick={() => onSaveWeight(Number(jin))}>
-            记下
-          </button>
+      </div>
+
+      <div className="habit-row">
+        <div className="water-card">
+          <div className="habit-head">
+            <span>喝水</span>
+            <em>
+              {water}/8 杯 · {water * 250}ml
+            </em>
+          </div>
+          <div className="water-cups" role="group" aria-label="今日饮水">
+            {Array.from({ length: 8 }, (_, index) => {
+              const filled = index < water;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  className={filled ? "cup on" : "cup"}
+                  aria-label={`第 ${index + 1} 杯`}
+                  onClick={() => setCups(water === index + 1 ? index : index + 1)}
+                />
+              );
+            })}
+          </div>
         </div>
-        <Sparkline values={spark} />
+
+        <div className="weight-card">
+          <div className="habit-head">
+            <span>体重</span>
+            <em>近 7 天</em>
+          </div>
+          <div className="weight-row">
+            <input
+              type="number"
+              inputMode="decimal"
+              value={jin}
+              onChange={(e) => setJin(e.target.value)}
+              aria-label="今日体重"
+            />
+            <em>斤</em>
+            <button type="button" className="mini-btn" onClick={() => onSaveWeight(Number(jin))}>
+              记下
+            </button>
+          </div>
+          <Sparkline values={spark} />
+        </div>
       </div>
 
       <h2 className="section-title">今日安排</h2>
@@ -105,14 +188,23 @@ export function TodayScreen({
               key={recipe.slot}
               recipe={recipe}
               eaten={Boolean(dayEaten[recipe.slot])}
+              favorite={favorites.includes(recipe.id)}
               onOpen={() => onOpen(recipe)}
               onToggleEaten={() => onToggleEaten(recipe.slot)}
+              onToggleFavorite={() => onToggleFavorite(recipe.id)}
             />
           ))
         )}
       </div>
+
+      {toast ? <p className="toast page-toast">{toast}</p> : null}
     </section>
   );
+}
+
+function clampCups(n: number): number {
+  if (!Number.isFinite(n)) return 0;
+  return Math.min(8, Math.max(0, Math.round(n)));
 }
 
 function lastSevenWeights(weights: Record<string, number>, today: Date): number[] {

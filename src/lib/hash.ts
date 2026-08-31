@@ -16,7 +16,12 @@ export function parseHash(): Route {
   if (parts[0] === "recipe" && parts[1]) {
     return { tab: "today", recipeId: parts[1], dateKey };
   }
-  if (parts[0] === "week" || parts[0] === "grocery" || parts[0] === "today") {
+  if (
+    parts[0] === "week" ||
+    parts[0] === "grocery" ||
+    parts[0] === "today" ||
+    parts[0] === "library"
+  ) {
     return { tab: parts[0], recipeId: null, dateKey };
   }
   return { tab: "today", recipeId: null, dateKey };

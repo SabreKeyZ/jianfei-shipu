@@ -9,6 +9,9 @@ const PROFILE_KEY = "jianfei:profile";
 const EATEN_KEY = "jianfei:eaten";
 const WEIGHT_KEY = "jianfei:weight-jin";
 const SKIP_KEY = "jianfei:profile-skipped";
+const FAVORITE_KEY = "jianfei:favorites";
+const WATER_KEY = "jianfei:water";
+const PWA_HINT_KEY = "jianfei:pwa-hint-dismissed";
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -100,4 +103,29 @@ export function loadWeights(): Record<string, number> {
 
 export function saveWeights(map: Record<string, number>): void {
   writeJson(WEIGHT_KEY, map);
+}
+
+export function loadFavorites(): string[] {
+  const raw = readJson<string[]>(FAVORITE_KEY, []);
+  return Array.isArray(raw) ? raw.filter((id) => typeof id === "string") : [];
+}
+
+export function saveFavorites(ids: string[]): void {
+  writeJson(FAVORITE_KEY, ids);
+}
+
+export function loadWater(): Record<string, number> {
+  return readJson<Record<string, number>>(WATER_KEY, {});
+}
+
+export function saveWater(map: Record<string, number>): void {
+  writeJson(WATER_KEY, map);
+}
+
+export function loadPwaHintDismissed(): boolean {
+  return localStorage.getItem(PWA_HINT_KEY) === "1";
+}
+
+export function savePwaHintDismissed(): void {
+  localStorage.setItem(PWA_HINT_KEY, "1");
 }

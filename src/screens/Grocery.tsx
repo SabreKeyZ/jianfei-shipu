@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
+import { DishPhoto } from "../components/DishPhoto";
+import { SLOTS } from "../data/plan";
 import { toDateKey } from "../lib/date";
-import { GROUP_LABEL, groceryForToday, groceryForWeek } from "../lib/meals";
+import { GROUP_LABEL, groceryForToday, groceryForWeek, recipesForDate } from "../lib/meals";
 import type { Profile } from "../lib/profile";
 import { loadChecked, loadGroceryScope, saveChecked, saveGroceryScope } from "../lib/storage";
 
@@ -20,6 +22,10 @@ export function GroceryScreen({
     () => (scope === "today" ? groceryForToday(profile, today) : groceryForWeek(profile, today)),
     [scope, today, revision, profile],
   );
+  const thumbs = useMemo(() => {
+    const recipes = recipesForDate(profile, today);
+    return SLOTS.map((slot) => recipes[slot]);
+  }, [profile, today, revision]);
 
   const prefix = scope === "today" ? `d:${toDateKey(today)}` : "w";
 
@@ -65,6 +71,14 @@ export function GroceryScreen({
         >
           这一周
         </button>
+      </div>
+
+      <div className="grocery-thumbs" aria-label="今日这些菜">
+        {thumbs.map((recipe) => (
+          <div key={recipe.slot} className="grocery-thumb">
+            <DishPhoto recipe={recipe} />
+          </div>
+        ))}
       </div>
 
       <p className="grocery-progress">
