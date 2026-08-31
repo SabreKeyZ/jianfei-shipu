@@ -1,5 +1,24 @@
 import { useState } from "react";
-import { targetsOf, type Goal, type Profile, type Sex } from "../lib/profile";
+import {
+  parseProfileNumber,
+  profileFieldError,
+  seedProfileField,
+  targetsOf,
+  type Goal,
+  type Profile,
+  type Sex,
+} from "../lib/profile";
+
+function digitsOnly(raw: string): string {
+  return raw.replace(/\D/g, "");
+}
+
+function decimalAmount(raw: string): string {
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const dot = cleaned.indexOf(".");
+  if (dot === -1) return cleaned;
+  return `${cleaned.slice(0, dot + 1)}${cleaned.slice(dot + 1).replace(/\./g, "")}`;
+}
 
 export function ProfileSheet({
   initial,
@@ -14,23 +33,35 @@ export function ProfileSheet({
   onSkip?: () => void;
   onClose?: () => void;
 }) {
-  const [heightCm, setHeightCm] = useState(initial?.heightCm ?? 160);
-  const [weightKg, setWeightKg] = useState(initial?.weightKg ?? 55);
-  const [age, setAge] = useState(initial?.age ?? 28);
+  const [heightCm, setHeightCm] = useState(() => seedProfileField(initial?.heightCm, 160));
+  const [weightKg, setWeightKg] = useState(() => seedProfileField(initial?.weightKg, 55));
+  const [age, setAge] = useState(() => seedProfileField(initial?.age, 28));
   const [sex, setSex] = useState<Sex>(initial?.sex ?? "female");
   const [goal, setGoal] = useState<Goal>(initial?.goal ?? "cut");
 
-  const draft: Profile = {
-    heightCm,
-    weightKg,
-    age,
-    sex,
-    goal,
-    source: "user",
-  };
-  const preview = targetsOf(draft);
+  const heightError = profileFieldError("heightCm", heightCm);
+  const weightError = profileFieldError("weightKg", weightKg);
+  const ageError = profileFieldError("age", age);
+  const formError = heightError ?? weightError ?? ageError;
+
+  const draftHeight = parseProfileNumber(heightCm);
+  const draftWeight = parseProfileNumber(weightKg);
+  const draftAge = parseProfileNumber(age);
+  const draft: Profile | null =
+    draftHeight != null && draftWeight != null && draftAge != null
+      ? {
+          heightCm: draftHeight,
+          weightKg: draftWeight,
+          age: draftAge,
+          sex,
+          goal,
+          source: "user",
+        }
+      : null;
+  const preview = draft && !formError ? targetsOf(draft) : null;
 
   function submit() {
+    if (!draft || formError) return;
     onSave(draft);
   }
 
@@ -46,37 +77,41 @@ export function ProfileSheet({
         <label className="field">
           <span>身高</span>
           <input
-            type="number"
+            type="text"
             inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            placeholder="例如 160"
             value={heightCm}
-            min={130}
-            max={210}
-            onChange={(e) => setHeightCm(Number(e.target.value))}
+            aria-invalid={Boolean(heightError)}
+            onChange={(e) => setHeightCm(digitsOnly(e.target.value))}
           />
           <em>cm</em>
         </label>
         <label className="field">
           <span>体重</span>
           <input
-            type="number"
+            type="text"
             inputMode="decimal"
+            autoComplete="off"
+            placeholder="例如 55"
             value={weightKg}
-            min={35}
-            max={160}
-            step={0.5}
-            onChange={(e) => setWeightKg(Number(e.target.value))}
+            aria-invalid={Boolean(weightError)}
+            onChange={(e) => setWeightKg(decimalAmount(e.target.value))}
           />
           <em>kg</em>
         </label>
         <label className="field">
           <span>年龄</span>
           <input
-            type="number"
+            type="text"
             inputMode="numeric"
+            pattern="[0-9]*"
+            autoComplete="off"
+            placeholder="例如 28"
             value={age}
-            min={14}
-            max={90}
-            onChange={(e) => setAge(Number(e.target.value))}
+            aria-invalid={Boolean(ageError)}
+            onChange={(e) => setAge(digitsOnly(e.target.value))}
           />
           <em>岁</em>
         </label>
@@ -105,10 +140,18 @@ export function ProfileSheet({
         </div>
 
         <p className="sheet-target">
-          今日目标大约 {preview.kcal} 千卡 · 蛋白 {preview.protein}g
+          {preview
+            ? `今日目标大约 ${preview.kcal} 千卡 · 蛋白 ${preview.protein}g`
+            : "填好身高、体重和年龄后会算出今日目标"}
         </p>
+        {formError ? <p className="sheet-error">{formError}</p> : null}
 
-        <button type="button" className="btn-primary sheet-save" onClick={submit}>
+        <button
+          type="button"
+          className="btn-primary sheet-save"
+          disabled={Boolean(formError)}
+          onClick={submit}
+        >
           按这个排菜单
         </button>
         {allowSkip ? (

@@ -29,15 +29,56 @@ export const DEMO_PROFILE: Profile = {
   source: "demo",
 };
 
+export const PROFILE_BOUNDS = {
+  heightCm: { min: 130, max: 210 },
+  weightKg: { min: 35, max: 160 },
+  age: { min: 14, max: 90 },
+} as const;
+
+/** Keep empty / unfinished inputs as strings so clearing a field is not coerced to 0. */
+export function parseProfileNumber(text: string): number | null {
+  const trimmed = text.trim();
+  if (trimmed === "") return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
+
+export function seedProfileField(value: number | undefined, fallback: number): string {
+  if (value == null) return String(fallback);
+  if (!Number.isFinite(value) || value <= 0) return "";
+  return String(value);
+}
+
+export function profileFieldError(
+  field: "heightCm" | "weightKg" | "age",
+  text: string,
+): string | null {
+  const n = parseProfileNumber(text);
+  const { min, max } = PROFILE_BOUNDS[field];
+  if (field === "age") {
+    if (n == null) return "请填写年龄";
+    if (n < min || n > max) return `年龄请填 ${min}–${max} 岁`;
+    return null;
+  }
+  if (field === "heightCm") {
+    if (n == null) return "请填写身高";
+    if (n < min || n > max) return `身高请填 ${min}–${max} cm`;
+    return null;
+  }
+  if (n == null) return "请填写体重";
+  if (n < min || n > max) return `体重请填 ${min}–${max} kg`;
+  return null;
+}
+
 export function isProfileComplete(p: Partial<Profile> | null | undefined): p is Profile {
   if (!p) return false;
   return (
-    Number(p.heightCm) >= 130 &&
-    Number(p.heightCm) <= 210 &&
-    Number(p.weightKg) >= 35 &&
-    Number(p.weightKg) <= 160 &&
-    Number(p.age) >= 14 &&
-    Number(p.age) <= 90 &&
+    Number(p.heightCm) >= PROFILE_BOUNDS.heightCm.min &&
+    Number(p.heightCm) <= PROFILE_BOUNDS.heightCm.max &&
+    Number(p.weightKg) >= PROFILE_BOUNDS.weightKg.min &&
+    Number(p.weightKg) <= PROFILE_BOUNDS.weightKg.max &&
+    Number(p.age) >= PROFILE_BOUNDS.age.min &&
+    Number(p.age) <= PROFILE_BOUNDS.age.max &&
     (p.sex === "female" || p.sex === "male") &&
     (p.goal === "cut" || p.goal === "maintain")
   );
