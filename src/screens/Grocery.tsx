@@ -75,7 +75,7 @@ export function GroceryScreen({
 
       <div className="grocery-thumbs" aria-label="今日这些菜">
         {thumbs.map((recipe) => (
-          <div key={recipe.slot} className="grocery-thumb">
+          <div key={`${recipe.slot}-${recipe.id}`} className="grocery-thumb">
             <DishPhoto recipe={recipe} />
           </div>
         ))}

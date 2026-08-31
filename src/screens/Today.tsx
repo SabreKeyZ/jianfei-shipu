@@ -204,7 +204,7 @@ export function TodayScreen({
         ) : (
           visible.map((recipe) => (
             <MealCard
-              key={recipe.slot}
+              key={`${recipe.slot}-${recipe.id}`}
               recipe={recipe}
               eaten={Boolean(dayEaten[recipe.slot])}
               favorite={favorites.includes(recipe.id)}

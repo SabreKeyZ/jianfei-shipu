@@ -94,7 +94,7 @@ export function WeekScreen({
         ) : (
           visible.map((recipe) => (
             <MealCard
-              key={recipe.slot}
+              key={`${recipe.slot}-${recipe.id}`}
               recipe={recipe}
               favorite={favorites.includes(recipe.id)}
               onOpen={() => onOpen(recipe, selected)}
