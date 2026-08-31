@@ -4,7 +4,9 @@ import { SLOTS } from "../data/plan";
 import { toDateKey } from "../lib/date";
 import { GROUP_LABEL, groceryForToday, groceryForWeek, recipesForDate } from "../lib/meals";
 import type { Profile } from "../lib/profile";
+import { copyText, groceryShareText } from "../lib/share";
 import { loadChecked, loadGroceryScope, saveChecked, saveGroceryScope } from "../lib/storage";
+import type { GroceryGroup } from "../types";
 
 export function GroceryScreen({
   today,
@@ -17,6 +19,7 @@ export function GroceryScreen({
 }) {
   const [scope, setScope] = useState<"today" | "week">(loadGroceryScope);
   const [checked, setChecked] = useState<Record<string, boolean>>(loadChecked);
+  const [toast, setToast] = useState("");
 
   const sections = useMemo(
     () => (scope === "today" ? groceryForToday(profile, today) : groceryForWeek(profile, today)),
@@ -29,6 +32,11 @@ export function GroceryScreen({
 
   const prefix = scope === "today" ? `d:${toDateKey(today)}` : "w";
 
+  function showToast(text: string) {
+    setToast(text);
+    window.setTimeout(() => setToast(""), 2200);
+  }
+
   function toggleScope(next: "today" | "week") {
     setScope(next);
     saveGroceryScope(next);
@@ -39,6 +47,11 @@ export function GroceryScreen({
     const next = { ...checked, [key]: !checked[key] };
     setChecked(next);
     saveChecked(next);
+  }
+
+  async function copyList() {
+    const ok = await copyText(groceryShareText(scope, sections));
+    showToast(ok ? "已复制，去微信粘贴" : "复制失败，请长按选择文字");
   }
 
   const total = sections.reduce((sum, section) => sum + section.items.length, 0);
@@ -81,9 +94,16 @@ export function GroceryScreen({
         ))}
       </div>
 
-      <p className="grocery-progress">
-        {allDone ? "买齐了" : `已勾选 ${done} / ${total}`}
-      </p>
+      <div className="grocery-toolbar">
+        <p className="grocery-progress">
+          {allDone ? "买齐了" : `已勾选 ${done} / ${total}`}
+        </p>
+        {total > 0 ? (
+          <button type="button" className="gear" onClick={() => void copyList()}>
+            复制清单
+          </button>
+        ) : null}
+      </div>
 
       {total === 0 ? (
         <div className="empty-state">
@@ -94,29 +114,14 @@ export function GroceryScreen({
       ) : null}
 
       {sections.map((section) => (
-        <div key={section.group} className="grocery-group">
-          <h2>{GROUP_LABEL[section.group]}</h2>
-          <ul>
-            {section.items.map((item) => {
-              const key = `${prefix}:${item.name}`;
-              const on = Boolean(checked[key]);
-              return (
-                <li key={item.name}>
-                  <label className={on ? "done" : ""}>
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      onChange={() => toggle(item.name)}
-                    />
-                    <span className="check" />
-                    <span className="g-name">{item.name}</span>
-                    <span className="g-amt">{item.amount}</span>
-                  </label>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        <GroceryGroupList
+          key={section.group}
+          group={section.group}
+          items={section.items}
+          prefix={prefix}
+          checked={checked}
+          onToggle={toggle}
+        />
       ))}
 
       {allDone ? (
@@ -125,6 +130,55 @@ export function GroceryScreen({
           <span>勾选会留在这台手机上</span>
         </div>
       ) : null}
+
+      {toast ? <p className="toast page-toast">{toast}</p> : null}
     </section>
+  );
+}
+
+function GroceryGroupList({
+  group,
+  items,
+  prefix,
+  checked,
+  onToggle,
+}: {
+  group: GroceryGroup;
+  items: { name: string; amount: string }[];
+  prefix: string;
+  checked: Record<string, boolean>;
+  onToggle: (name: string) => void;
+}) {
+  const sorted = [...items].sort((a, b) => {
+    const aOn = Boolean(checked[`${prefix}:${a.name}`]);
+    const bOn = Boolean(checked[`${prefix}:${b.name}`]);
+    if (aOn === bOn) return 0;
+    return aOn ? 1 : -1;
+  });
+
+  return (
+    <div className="grocery-group">
+      <h2>{GROUP_LABEL[group]}</h2>
+      <ul>
+        {sorted.map((item) => {
+          const key = `${prefix}:${item.name}`;
+          const on = Boolean(checked[key]);
+          return (
+            <li key={item.name}>
+              <label className={on ? "done" : ""}>
+                <input
+                  type="checkbox"
+                  checked={on}
+                  onChange={() => onToggle(item.name)}
+                />
+                <span className="check" />
+                <span className="g-name">{item.name}</span>
+                <span className="g-amt">{item.amount}</span>
+              </label>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
   );
 }

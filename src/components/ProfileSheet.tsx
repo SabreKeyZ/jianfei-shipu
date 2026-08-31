@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BackupBar } from "./BackupBar";
 import {
   parseProfileNumber,
   profileFieldError,
@@ -27,6 +28,7 @@ export function ProfileSheet({
   onSave,
   onSkip,
   onClose,
+  onRestored,
 }: {
   initial: Profile | null;
   allowSkip: boolean;
@@ -34,6 +36,7 @@ export function ProfileSheet({
   onSave: (profile: Profile) => void;
   onSkip?: () => void;
   onClose?: () => void;
+  onRestored?: () => void;
 }) {
   const [heightCm, setHeightCm] = useState(() => seedProfileField(initial?.heightCm, 160));
   const [weightKg, setWeightKg] = useState(() => seedProfileField(initial?.weightKg, 55));
@@ -166,6 +169,7 @@ export function ProfileSheet({
             先不改
           </button>
         ) : null}
+        {onClose && onRestored ? <BackupBar onRestored={onRestored} /> : null}
       </div>
     </div>
   );

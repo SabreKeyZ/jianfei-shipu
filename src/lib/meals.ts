@@ -27,13 +27,13 @@ export interface GroceryItem {
   group: GroceryGroup;
 }
 
-const GROUP_ORDER: GroceryGroup[] = ["veg", "protein", "staple", "seasoning"];
+const GROUP_ORDER: GroceryGroup[] = ["protein", "veg", "staple", "seasoning"];
 
 export const GROUP_LABEL: Record<GroceryGroup, string> = {
-  veg: "蔬菜水果",
-  protein: "肉蛋豆坚果",
-  staple: "主食奶豆制品",
-  seasoning: "调味",
+  protein: "肉",
+  veg: "菜",
+  staple: "主食",
+  seasoning: "调料",
 };
 
 function mergeIngredients(list: Ingredient[]): GroceryItem[] {

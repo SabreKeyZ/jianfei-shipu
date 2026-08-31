@@ -128,6 +128,14 @@ export function App() {
     setRevision((n) => n + 1);
   }
 
+  function reloadFromStorage() {
+    setProfile(loadOrDemoProfile());
+    setEaten(loadEaten());
+    setWeights(loadWeights());
+    setFavorites(loadFavorites());
+    setRevision((n) => n + 1);
+  }
+
   return (
     <div className="app-shell">
       <div className="phone">
@@ -164,6 +172,7 @@ export function App() {
               onOpen={openRecipe}
               onToggleFavorite={toggleFavorite}
               onOpenSettings={openSettings}
+              onRestored={reloadFromStorage}
             />
           ) : route.tab === "library" ? (
             <LibraryScreen
@@ -173,7 +182,7 @@ export function App() {
               onOpenSettings={openSettings}
             />
           ) : route.tab === "grocery" ? (
-            <GroceryScreen today={now} profile={profile} revision={revision} />
+            <GroceryScreen key={`${revision}-grocery`} today={now} profile={profile} revision={revision} />
           ) : (
             <TodayScreen
               key={`${revision}-today`}
@@ -209,6 +218,7 @@ export function App() {
                 : undefined
             }
             onClose={sheetMode === "settings" ? () => setSheet(false) : undefined}
+            onRestored={sheetMode === "settings" ? reloadFromStorage : undefined}
           />
         ) : null}
       </div>

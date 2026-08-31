@@ -161,7 +161,7 @@ export function TodayScreen({
         <div className="weight-card">
           <div className="habit-head">
             <span>体重</span>
-            <em>近 7 天</em>
+            <em>{weightDeltaText(weights, key) ?? "近 7 天"}</em>
           </div>
           <div className="weight-row">
             <input
@@ -228,6 +228,23 @@ export function TodayScreen({
 function clampCups(n: number): number {
   if (!Number.isFinite(n)) return 0;
   return Math.min(8, Math.max(0, Math.round(n)));
+}
+
+function previousWeight(weights: Record<string, number>, todayKey: string): number | null {
+  const prevKeys = Object.keys(weights)
+    .filter((key) => key < todayKey && Number.isFinite(weights[key]) && weights[key] > 0)
+    .sort();
+  if (prevKeys.length === 0) return null;
+  return weights[prevKeys[prevKeys.length - 1]] ?? null;
+}
+
+function weightDeltaText(weights: Record<string, number>, todayKey: string): string | null {
+  const current = weights[todayKey];
+  const previous = previousWeight(weights, todayKey);
+  if (!current || previous == null) return null;
+  const delta = Math.round((current - previous) * 10) / 10;
+  const sign = delta > 0 ? "+" : "";
+  return `较上次 ${sign}${delta} 斤`;
 }
 
 function lastSevenWeights(weights: Record<string, number>, today: Date): number[] {

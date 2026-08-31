@@ -6,7 +6,8 @@ export function formatAmount(name: string, food: string, grams: number): string 
     return `${g}ml`;
   }
   if (name.includes("鸡蛋") || name === "茶叶蛋") {
-    const count = Math.max(1, Math.round(g / 50));
+    const count = Math.round((g / 50) * 2) / 2;
+    if (count <= 0) return `${g}g`;
     return `${count}个 · ${g}g`;
   }
   return `${g}g`;
