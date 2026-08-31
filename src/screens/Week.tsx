@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { BackupBar } from "../components/BackupBar";
 import { FilterChips } from "../components/FilterChips";
 import { MacroRow } from "../components/MacroRow";
 import { MealCard } from "../components/MealCard";
@@ -25,6 +26,7 @@ export function WeekScreen({
   onOpen,
   onToggleFavorite,
   onOpenSettings,
+  onRestored,
 }: {
   today: Date;
   selected: Date;
@@ -34,6 +36,7 @@ export function WeekScreen({
   onOpen: (recipe: Recipe, date: Date) => void;
   onToggleFavorite: (id: string) => void;
   onOpenSettings: () => void;
+  onRestored: () => void;
 }) {
   const [filter, setFilter] = useState<MenuFilter>("all");
   const days = weekDates(today);
@@ -94,7 +97,7 @@ export function WeekScreen({
         ) : (
           visible.map((recipe) => (
             <MealCard
-              key={recipe.slot}
+              key={`${recipe.slot}-${recipe.id}`}
               recipe={recipe}
               favorite={favorites.includes(recipe.id)}
               onOpen={() => onOpen(recipe, selected)}
@@ -103,6 +106,8 @@ export function WeekScreen({
           ))
         )}
       </div>
+
+      <BackupBar onRestored={onRestored} />
     </section>
   );
 }

@@ -37,7 +37,7 @@ export interface Recipe {
   slot: MealSlot;
   minutes: number;
   art: FoodArtKind;
-  /** Optional file under public/dishes/; defaults to `${art}.jpg`. */
+  /** Optional file under public/dishes/; otherwise matched from name + ingredients. */
   image?: string;
   ingredients: Ingredient[];
   steps: string[];

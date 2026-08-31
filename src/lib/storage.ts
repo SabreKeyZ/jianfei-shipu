@@ -71,6 +71,14 @@ export function saveProfile(profile: Profile): void {
   writeJson(PROFILE_KEY, profile);
 }
 
+export function clearProfile(): void {
+  localStorage.removeItem(PROFILE_KEY);
+}
+
+export function saveSwaps(map: Record<string, SlotSwaps>): void {
+  writeJson(SWAP_KEY, map);
+}
+
 export function loadOrDemoProfile(): Profile {
   return loadProfile() ?? (hasSkippedProfile() ? DEMO_PROFILE : DEMO_PROFILE);
 }

@@ -28,7 +28,7 @@ export function MealCard({
     <article className={`meal-card${eaten ? " eaten" : ""}`}>
       <button type="button" className="meal-card-main" onClick={onOpen}>
         <div className="meal-thumb">
-          <DishPhoto recipe={recipe} />
+          <DishPhoto recipe={recipe} caption />
           <span className="photo-time">⏱ {recipe.minutes}分钟</span>
         </div>
         <div className="meal-card-body">

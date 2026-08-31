@@ -138,7 +138,7 @@ function LibraryCard({
     <article className="lib-card">
       <button type="button" className="lib-card-main" onClick={onOpen}>
         <div className="lib-thumb">
-          <DishPhoto recipe={recipe} />
+          <DishPhoto recipe={recipe} caption />
           <HeartButton on={favorite} onToggle={onToggleFavorite} className="lib-heart" />
         </div>
         <div className="lib-body">
