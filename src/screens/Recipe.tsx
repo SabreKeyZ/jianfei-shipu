@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DishPhoto } from "../components/DishPhoto";
 import { HeartButton } from "../components/HeartButton";
 import { MacroRow } from "../components/MacroRow";
@@ -12,6 +12,9 @@ import { dayPlan } from "../lib/meals";
 import type { Profile } from "../lib/profile";
 import { saveDaySwap } from "../lib/storage";
 import type { MealSlot, Recipe as RecipeType } from "../types";
+
+const SERVINGS = [0.5, 1, 1.5, 2] as const;
+type Serving = (typeof SERVINGS)[number];
 
 export function RecipeScreen({
   recipeId,
@@ -36,11 +39,27 @@ export function RecipeScreen({
 }) {
   const [toast, setToast] = useState("");
   const [started, setStarted] = useState(false);
+  const [servings, setServings] = useState<Serving>(1);
   const stepsRef = useRef<HTMLDivElement>(null);
   const planned = Object.values(dayPlan(profile, date).recipes).find((item) => item.id === recipeId);
   const recipe = planned ?? getRecipe(recipeId);
-  const macros = recipeMacros(recipe);
-  const grams = recipe.ingredients.reduce((sum, item) => sum + item.grams, 0);
+  const scaled = {
+    ...recipe,
+    ingredients: recipe.ingredients.map((item) => ({ ...item, grams: item.grams * servings })),
+  };
+  const macros = recipeMacros(scaled);
+  const grams = scaled.ingredients.reduce((sum, item) => sum + item.grams, 0);
+
+  useEffect(() => {
+    setServings(1);
+    setStarted(false);
+  }, [recipe.id]);
+
+  function bumpServings(dir: -1 | 1) {
+    const index = SERVINGS.indexOf(servings);
+    const next = SERVINGS[index + dir];
+    if (next != null) setServings(next);
+  }
   const per100 = roundMacros({
     kcal: (macros.kcal / Math.max(grams, 1)) * 100,
     protein: (macros.protein / Math.max(grams, 1)) * 100,
@@ -89,7 +108,25 @@ export function RecipeScreen({
           <h1>{recipe.name}</h1>
           <div className="recipe-meta">
             <span className="time-chip">{recipe.minutes} 分钟</span>
-            <span>1 人份</span>
+            <div className="servings-stepper" role="group" aria-label="份数">
+              <button
+                type="button"
+                disabled={servings <= 0.5}
+                onClick={() => bumpServings(-1)}
+                aria-label="减少份数"
+              >
+                −
+              </button>
+              <span>{servings} 人份</span>
+              <button
+                type="button"
+                disabled={servings >= 2}
+                onClick={() => bumpServings(1)}
+                aria-label="增加份数"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           <MacroRow macros={macros} />
@@ -99,7 +136,7 @@ export function RecipeScreen({
 
           <h2>食材</h2>
           <ul className="chip-list">
-            {recipe.ingredients.map((item) => (
+            {scaled.ingredients.map((item) => (
               <li key={item.name}>
                 <span>{item.name}</span>
                 <em>{formatAmount(item.name, item.food, item.grams)}</em>
