@@ -7,6 +7,7 @@ import { navigate, parseHash, type Route } from "./lib/hash";
 import { DEMO_PROFILE, type Profile } from "./lib/profile";
 import {
   loadEaten,
+  loadFavorites,
   loadOrDemoProfile,
   loadProfile,
   loadWeights,
@@ -14,11 +15,13 @@ import {
   markProfileSkipped,
   needsOnboarding,
   saveEaten,
+  saveFavorites,
   saveProfile,
   saveWeights,
   saveWeekSelectedKey,
 } from "./lib/storage";
 import { GroceryScreen } from "./screens/Grocery";
+import { LibraryScreen } from "./screens/Library";
 import { RecipeScreen } from "./screens/Recipe";
 import { TodayScreen } from "./screens/Today";
 import { WeekScreen } from "./screens/Week";
@@ -42,6 +45,7 @@ export function App() {
   const [sheetMode, setSheetMode] = useState<"onboard" | "settings">("onboard");
   const [eaten, setEaten] = useState(loadEaten);
   const [weights, setWeights] = useState(loadWeights);
+  const [favorites, setFavorites] = useState(loadFavorites);
 
   useEffect(() => {
     const sync = () => {
@@ -87,6 +91,12 @@ export function App() {
     saveEaten(next);
   }
 
+  function toggleFavorite(id: string) {
+    const next = favorites.includes(id) ? favorites.filter((item) => item !== id) : [...favorites, id];
+    setFavorites(next);
+    saveFavorites(next);
+  }
+
   function saveWeight(jin: number) {
     if (!Number.isFinite(jin) || jin <= 0) return;
     const next = { ...weights, [toDateKey(now)]: Math.round(jin * 10) / 10 };
@@ -106,8 +116,14 @@ export function App() {
             <RecipeScreen
               recipeId={route.recipeId}
               date={recipeDate}
+              today={now}
               profile={profile}
+              favorite={favorites.includes(route.recipeId)}
               onBack={() => goTab(lastTab)}
+              onToggleFavorite={() => {
+                if (route.recipeId) toggleFavorite(route.recipeId);
+              }}
+              onAssigned={() => setRevision((n) => n + 1)}
               onSwapped={(recipe) => {
                 setRevision((n) => n + 1);
                 navigate({
@@ -123,8 +139,16 @@ export function App() {
               today={now}
               selected={weekDate}
               profile={profile}
+              favorites={favorites}
               onSelect={selectWeekDay}
               onOpen={openRecipe}
+              onToggleFavorite={toggleFavorite}
+            />
+          ) : route.tab === "library" ? (
+            <LibraryScreen
+              favorites={favorites}
+              onOpen={(recipe) => openRecipe(recipe, now)}
+              onToggleFavorite={toggleFavorite}
             />
           ) : route.tab === "grocery" ? (
             <GroceryScreen today={now} profile={profile} revision={revision} />
@@ -135,8 +159,10 @@ export function App() {
               profile={profile}
               eaten={eaten}
               weights={weights}
+              favorites={favorites}
               onOpen={(recipe) => openRecipe(recipe, now)}
               onToggleEaten={toggleEaten}
+              onToggleFavorite={toggleFavorite}
               onOpenSettings={() => {
                 setSheetMode("settings");
                 setSheet(true);

@@ -22,6 +22,7 @@ const FLEX = new Set([
   "mantou",
   "banana",
   "apple",
+  "mixed_rice",
 ]);
 
 const SHARES: Record<Persona, Record<MealSlot, number>> = {

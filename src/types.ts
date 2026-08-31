@@ -37,6 +37,8 @@ export interface Recipe {
   slot: MealSlot;
   minutes: number;
   art: FoodArtKind;
+  /** Optional file under public/dishes/; defaults to `${art}.jpg`. */
+  image?: string;
   ingredients: Ingredient[];
   steps: string[];
   tip: string;
@@ -58,4 +60,4 @@ export interface DayMeals {
 
 export type SlotSwaps = Partial<Record<MealSlot, string>>;
 
-export type TabId = "today" | "week" | "grocery";
+export type TabId = "today" | "week" | "library" | "grocery";
