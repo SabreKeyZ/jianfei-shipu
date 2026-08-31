@@ -239,6 +239,7 @@ p {
 }
 
 .meal-thumb {
+  position: relative;
   flex: 0 0 118px;
   width: 118px;
   min-height: 118px;
@@ -655,6 +656,84 @@ p {
   text-align: center;
 }
 
+.hero-sub.tap-edit {
+  border: 0;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.hero-sub.tap-edit:active {
+  background: var(--accent-soft);
+}
+
+.edit-profile {
+  margin-top: 6px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+  padding: 4px 8px;
+}
+
+.section-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.section-row .section-title {
+  margin: 8px 0 12px;
+}
+
+.reroll-btn {
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.photo-time {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  background: rgba(28, 28, 30, 0.55);
+  color: #fff;
+  font-size: 11px;
+  border-radius: 999px;
+  padding: 2px 7px;
+}
+
+.meal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--hairline);
+}
+
+.swap-chip,
+.meal-actions .eat-btn {
+  border: 0;
+  border-top: 0;
+  background: #faf7f2;
+  color: var(--accent);
+  padding: 10px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.swap-chip {
+  border-right: 1px solid var(--hairline);
+}
+
+.meal-actions .eat-btn {
+  color: var(--muted);
+  font-weight: 500;
+}
+
 .weight-row {
   width: 100%;
   margin-top: 0;
@@ -710,7 +789,8 @@ p {
   background: rgba(40, 32, 24, 0.28);
   display: flex;
   align-items: flex-end;
-  z-index: 8;
+  z-index: 9999;
+  pointer-events: auto;
 }
 
 .sheet {

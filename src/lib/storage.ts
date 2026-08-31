@@ -12,6 +12,7 @@ const SKIP_KEY = "jianfei:profile-skipped";
 const FAVORITE_KEY = "jianfei:favorites";
 const WATER_KEY = "jianfei:water";
 const PWA_HINT_KEY = "jianfei:pwa-hint-dismissed";
+const REROLL_KEY = "jianfei:reroll";
 
 function readJson<T>(key: string, fallback: T): T {
   try {
@@ -128,4 +129,24 @@ export function loadPwaHintDismissed(): boolean {
 
 export function savePwaHintDismissed(): void {
   localStorage.setItem(PWA_HINT_KEY, "1");
+}
+
+export function loadRerolls(): Record<string, number> {
+  return readJson<Record<string, number>>(REROLL_KEY, {});
+}
+
+export function saveRerolls(map: Record<string, number>): void {
+  writeJson(REROLL_KEY, map);
+}
+
+export function bumpReroll(dateKey: string): number {
+  const all = loadRerolls();
+  const next = (all[dateKey] ?? 0) + 1;
+  saveRerolls({ ...all, [dateKey]: next });
+  const swaps = loadSwaps();
+  if (swaps[dateKey]) {
+    delete swaps[dateKey];
+    writeJson(SWAP_KEY, swaps);
+  }
+  return next;
 }

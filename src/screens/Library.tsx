@@ -26,10 +26,12 @@ export function LibraryScreen({
   favorites,
   onOpen,
   onToggleFavorite,
+  onOpenSettings,
 }: {
   favorites: string[];
   onOpen: (recipe: Recipe) => void;
   onToggleFavorite: (id: string) => void;
+  onOpenSettings: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [slot, setSlot] = useState<SlotChip>("all");
@@ -50,9 +52,14 @@ export function LibraryScreen({
 
   return (
     <section className="page">
-      <header className="page-head">
-        <p className="date-line">菜市场家常菜，点进去就能做</p>
-        <h1>菜谱</h1>
+      <header className="page-head row-head">
+        <div>
+          <p className="date-line">菜市场家常菜，点进去就能做</p>
+          <h1>菜谱</h1>
+        </div>
+        <button type="button" className="gear" onClick={onOpenSettings}>
+          改身体数据
+        </button>
       </header>
 
       <label className="search-bar">

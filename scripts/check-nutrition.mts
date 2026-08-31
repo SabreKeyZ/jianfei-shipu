@@ -1,4 +1,5 @@
 import { recipeMacros } from "../src/data/nutrition.ts";
+import { mainProtein } from "../src/lib/protein.ts";
 import { SLOTS } from "../src/data/plan.ts";
 import { RECIPES, recipesBySlot } from "../src/data/recipes.ts";
 import { generateDay } from "../src/lib/generate.ts";
@@ -25,6 +26,9 @@ const elder: Profile = {
 };
 
 console.log(`食谱总数 ${RECIPES.length}`);
+if (RECIPES.length < 180) {
+  throw new Error(`菜谱池太小：${RECIPES.length}，至少要 180 道`);
+}
 for (const slot of SLOTS) {
   console.log(`${slot} ${recipesBySlot(slot).length} 道`);
 }
@@ -38,12 +42,14 @@ function menuLine(label: string, profile: Profile) {
   let kcal = 0;
   let protein = 0;
   const dishes: string[] = [];
+  const proteins: string[] = [];
   for (const slot of SLOTS) {
     const recipe = day.recipes[slot];
     const m = recipeMacros(recipe);
     kcal += m.kcal;
     protein += m.protein;
     dishes.push(recipe.name);
+    proteins.push(mainProtein(recipe));
     if (m.kcal <= 0 || m.protein < 0 || m.carbs < 0 || m.fat < 0) {
       throw new Error(`${recipe.name} 缺宏量营养`);
     }
@@ -54,6 +60,14 @@ function menuLine(label: string, profile: Profile) {
   );
   if (gap > 120) {
     throw new Error(`${label} 偏离目标 ${gap}`);
+  }
+  const mains = proteins.filter((item) => item !== "other" && item !== "egg");
+  const counted = mains.reduce<Record<string, number>>((acc, item) => {
+    acc[item] = (acc[item] ?? 0) + 1;
+    return acc;
+  }, {});
+  if (Object.values(counted).some((n) => n >= 3)) {
+    throw new Error(`${label} 同一主蛋白一天出现三次：${mains.join(",")}`);
   }
   return dishes.join("|");
 }

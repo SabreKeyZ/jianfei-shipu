@@ -30,6 +30,8 @@ export function TodayScreen({
   onToggleEaten,
   onToggleFavorite,
   onOpenSettings,
+  onReroll,
+  onSwap,
   onSaveWeight,
 }: {
   date: Date;
@@ -41,6 +43,8 @@ export function TodayScreen({
   onToggleEaten: (slot: MealSlot) => void;
   onToggleFavorite: (id: string) => void;
   onOpenSettings: () => void;
+  onReroll: () => void;
+  onSwap: (slot: MealSlot, recipe: Recipe) => Recipe;
   onSaveWeight: (jin: number) => void;
 }) {
   const [filter, setFilter] = useState<MenuFilter>("all");
@@ -119,11 +123,14 @@ export function TodayScreen({
         <p className="hero-caption">
           按你的身体数据 · 今日 {generated.target.kcal} kcal
         </p>
-        <p className="hero-sub">
+        <button type="button" className="hero-sub tap-edit" onClick={onOpenSettings}>
           {profile.sex === "female" ? "女" : "男"} · {profile.age}岁 · {profile.heightCm}cm ·{" "}
           {profile.weightKg}kg · {profile.goal === "cut" ? "减脂" : "维持"}
           {profile.source === "demo" ? " · 示例" : ""}
-        </p>
+        </button>
+        <button type="button" className="edit-profile" onClick={onOpenSettings}>
+          改身体数据
+        </button>
         <MacroRow macros={macros} />
       </div>
 
@@ -173,7 +180,19 @@ export function TodayScreen({
         </div>
       </div>
 
-      <h2 className="section-title">今日安排</h2>
+      <div className="section-row">
+        <h2 className="section-title">今日安排</h2>
+        <button
+          type="button"
+          className="reroll-btn"
+          onClick={() => {
+            onReroll();
+            showToast("已换一批，仍按你的热量来");
+          }}
+        >
+          🎲 换一批
+        </button>
+      </div>
       <FilterChips value={filter} onChange={setFilter} />
 
       <div className="meal-list">
@@ -192,6 +211,10 @@ export function TodayScreen({
               onOpen={() => onOpen(recipe)}
               onToggleEaten={() => onToggleEaten(recipe.slot)}
               onToggleFavorite={() => onToggleFavorite(recipe.id)}
+              onSwap={() => {
+                const next = onSwap(recipe.slot, recipe);
+                showToast(`已换成「${next.name}」`);
+              }}
             />
           ))
         )}

@@ -3,11 +3,12 @@ import { SLOTS } from "../data/plan";
 import { getRecipe, recipesBySlot } from "../data/recipes";
 import type { MealSlot, Recipe, SlotSwaps } from "../types";
 import { formatAmount } from "./amounts";
-import { hashString, mulberry32 } from "./rng";
+import { toDateKey, weekDates } from "./date";
+import { proteinOverlapPenalty } from "./protein";
 import { personaOf, profileKey, targetsOf, type Persona, type Profile, type Targets } from "./profile";
+import { hashString, mulberry32 } from "./rng";
+import { loadRerolls, loadSwaps } from "./storage";
 import { recipeTags } from "./tags";
-import { toDateKey } from "./date";
-import { loadSwaps } from "./storage";
 
 const FLEX = new Set([
   "rice",
@@ -23,6 +24,8 @@ const FLEX = new Set([
   "banana",
   "apple",
   "mixed_rice",
+  "yam",
+  "purple_potato",
 ]);
 
 const SHARES: Record<Persona, Record<MealSlot, number>> = {
@@ -41,16 +44,40 @@ export interface GeneratedDay {
 
 export function generateDay(profile: Profile, date: Date): GeneratedDay {
   const dateKey = toDateKey(date);
+  const rolls = loadRerolls();
+  const usedCounts = new Map<string, number>();
+  let result: GeneratedDay | null = null;
+  for (const day of weekDates(date)) {
+    const key = toDateKey(day);
+    const generated = generateOne(profile, day, rolls[key] ?? 0, usedCounts);
+    if (key === dateKey) result = generated;
+    bump(usedCounts, generated.recipes.lunch.id);
+    bump(usedCounts, generated.recipes.dinner.id);
+  }
+  return result ?? generateOne(profile, date, rolls[dateKey] ?? 0, new Map());
+}
+
+function generateOne(
+  profile: Profile,
+  date: Date,
+  roll: number,
+  usedCounts: Map<string, number>,
+): GeneratedDay {
+  const dateKey = toDateKey(date);
   const target = targetsOf(profile);
   const persona = personaOf(profile);
-  const rng = mulberry32(hashString(`${profileKey(profile)}|${dateKey}`));
+  const rng = mulberry32(hashString(`${profileKey(profile)}|${dateKey}|r${roll}`));
   const shares = SHARES[persona];
   const picked = {} as Record<MealSlot, Recipe>;
 
   for (const slot of SLOTS) {
     const want = target.kcal * shares[slot];
-    const used = new Set(Object.values(picked).map((recipe) => recipe.id));
-    picked[slot] = scaleToward(pickSlot(slot, persona, rng, want, used), want);
+    const usedRecipes = Object.values(picked);
+    const usedIds = new Set(usedRecipes.map((recipe) => recipe.id));
+    picked[slot] = scaleToward(
+      pickSlot(slot, persona, rng, want, usedIds, usedRecipes, usedCounts),
+      want,
+    );
   }
 
   let recipes = picked;
@@ -59,7 +86,7 @@ export function generateDay(profile: Profile, date: Date): GeneratedDay {
     const diff = total - target.kcal;
     if (Math.abs(diff) <= 80) break;
     if (diff > 80) {
-      recipes = tighten(recipes, persona, rng, target.kcal);
+      recipes = tighten(recipes, persona, rng, target.kcal, usedCounts);
     } else {
       recipes = {
         ...recipes,
@@ -100,16 +127,21 @@ export function swapCandidates(
   currentId: string,
 ): Recipe[] {
   const day = dayFromProfile(profile, date, loadSwaps());
-  const used = dayKcal(day.recipes) - recipeMacros(day.recipes[slot]).kcal;
+  const current = day.recipes[slot];
+  const used = dayKcal(day.recipes) - recipeMacros(current).kcal;
   const budget = day.target.kcal - used;
+  const others = Object.values(day.recipes).filter((recipe) => recipe.id !== currentId);
   const list = recipesBySlot(slot)
     .filter((recipe) => recipe.id !== currentId)
     .map((recipe) => {
       const scaled = scaleToward(recipe, budget);
-      return { recipe: scaled, gap: Math.abs(recipeMacros(scaled).kcal - budget) };
+      const gap = Math.abs(recipeMacros(scaled).kcal - budget);
+      const penalty = proteinOverlapPenalty(recipe, others);
+      return { recipe: scaled, gap, penalty };
     })
-    .sort((a, b) => a.gap - b.gap);
-  return list.filter((item) => item.gap <= 160).map((item) => item.recipe).slice(0, 8);
+    .sort((a, b) => a.penalty - b.penalty || a.gap - b.gap);
+  const fit = list.filter((item) => item.gap <= 160);
+  return (fit.length > 0 ? fit : list).map((item) => item.recipe).slice(0, 8);
 }
 
 export function nextFitSwap(
@@ -124,8 +156,11 @@ export function nextFitSwap(
     const index = list.findIndex((recipe) => recipe.id === currentId);
     return list[(index + 1 + list.length) % list.length];
   }
-  const rng = mulberry32(hashString(`${profileKey(profile)}|${toDateKey(date)}|swap|${currentId}`));
-  return cands[Math.floor(rng() * Math.min(3, cands.length))];
+  const roll = loadRerolls()[toDateKey(date)] ?? 0;
+  const rng = mulberry32(
+    hashString(`${profileKey(profile)}|${toDateKey(date)}|swap|${currentId}|r${roll}`),
+  );
+  return cands[Math.floor(rng() * Math.min(4, cands.length))];
 }
 
 function dayKcal(recipes: Record<MealSlot, Recipe>): number {
@@ -137,16 +172,27 @@ function pickSlot(
   persona: Persona,
   rng: () => number,
   want: number,
-  used: Set<string>,
+  usedIds: Set<string>,
+  usedRecipes: Recipe[],
+  usedCounts: Map<string, number>,
 ): Recipe {
   const scored = recipesBySlot(slot)
-    .filter((recipe) => !used.has(recipe.id))
+    .filter((recipe) => !usedIds.has(recipe.id))
     .map((recipe) => {
       const kcal = recipeMacros(recipe).kcal;
       const fit = 1 - Math.min(Math.abs(kcal - want) / Math.max(want, 1), 1);
+      const weekOveruse =
+        (slot === "lunch" || slot === "dinner") && (usedCounts.get(recipe.id) ?? 0) >= 2
+          ? 12
+          : 0;
       return {
         recipe,
-        score: personaScore(recipe, persona) + fit * 1.4 + rng() * 1.1,
+        score:
+          personaScore(recipe, persona) +
+          fit * 1.4 +
+          rng() * 1.4 -
+          proteinOverlapPenalty(recipe, usedRecipes) -
+          weekOveruse,
       };
     })
     .sort((a, b) => b.score - a.score);
@@ -157,19 +203,14 @@ function personaScore(recipe: Recipe, persona: Persona): number {
   const tags = recipeTags(recipe);
   let score = 0;
   if (persona === "light") {
-    if (tags.has("light") || tags.has("lowCal")) score += 2.2;
-    if (tags.has("highProtein")) score += 1.6;
-    if (recipe.name.includes("鸡胸") || recipe.name.includes("豆腐") || recipe.name.includes("蛋")) {
-      score += 0.9;
-    }
+    if (tags.has("light") || tags.has("lowCal")) score += 1.8;
+    if (tags.has("highProtein")) score += 1.1;
     if (recipe.slot === "dinner" && tags.has("rice")) score -= 1.6;
     if (recipe.slot === "dinner" && tags.has("hearty")) score -= 2;
   }
   if (persona === "hearty") {
     if (tags.has("hearty") || tags.has("rice")) score += 2.2;
-    if (recipe.name.includes("鸡腿") || recipe.name.includes("饭") || recipe.name.includes("面")) {
-      score += 1;
-    }
+    if (recipe.name.includes("饭") || recipe.name.includes("面")) score += 0.6;
     if (recipe.slot === "lunch" && tags.has("lowCal")) score -= 1.2;
     if (recipe.slot === "snack" && recipeMacros(recipe).kcal >= 80) score += 0.8;
   }
@@ -208,16 +249,28 @@ function tighten(
   persona: Persona,
   rng: () => number,
   target: number,
+  usedCounts: Map<string, number>,
 ): Record<MealSlot, Recipe> {
   const dinnerWant = target * SHARES[persona].dinner;
   const snackWant = target * SHARES[persona].snack;
   return {
     ...recipes,
     dinner: scaleToward(
-      pickSlot("dinner", persona, rng, dinnerWant, new Set([recipes.breakfast.id, recipes.lunch.id])),
+      pickSlot(
+        "dinner",
+        persona,
+        rng,
+        dinnerWant,
+        new Set([recipes.breakfast.id, recipes.lunch.id]),
+        [recipes.breakfast, recipes.lunch],
+        usedCounts,
+      ),
       dinnerWant,
     ),
-    snack: scaleToward(pickSlot("snack", persona, rng, snackWant, new Set()), snackWant),
+    snack: scaleToward(
+      pickSlot("snack", persona, rng, snackWant, new Set(), [recipes.breakfast, recipes.lunch], usedCounts),
+      snackWant,
+    ),
     lunch: scaleToward(recipes.lunch, recipeMacros(recipes.lunch).kcal * 0.9),
   };
 }
@@ -234,4 +287,8 @@ export function applySwap(
     ...day,
     recipes: { ...day.recipes, [slot]: scaleToward(base, budget) },
   };
+}
+
+function bump(map: Map<string, number>, id: string): void {
+  map.set(id, (map.get(id) ?? 0) + 1);
 }

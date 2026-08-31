@@ -4,8 +4,10 @@ import { TabBar } from "./components/TabBar";
 import { RECIPE_BY_ID } from "./data/recipes";
 import { parseDateKey, today, toDateKey, weekDates } from "./lib/date";
 import { navigate, parseHash, type Route } from "./lib/hash";
-import { DEMO_PROFILE, type Profile } from "./lib/profile";
+import { DEMO_PROFILE, profileKey, type Profile } from "./lib/profile";
+import { nextFitSwap } from "./lib/generate";
 import {
+  bumpReroll,
   loadEaten,
   loadFavorites,
   loadOrDemoProfile,
@@ -14,6 +16,7 @@ import {
   loadWeekSelectedKey,
   markProfileSkipped,
   needsOnboarding,
+  saveDaySwap,
   saveEaten,
   saveFavorites,
   saveProfile,
@@ -108,6 +111,23 @@ export function App() {
   const showRecipe = Boolean(route.recipeId && RECIPE_BY_ID[route.recipeId]);
   const onboard = sheet && sheetMode === "onboard" && !loadProfile();
 
+  function openSettings() {
+    setSheetMode("settings");
+    setSheet(true);
+  }
+
+  function swapSlot(slot: MealSlot, date: Date, currentId: string) {
+    const next = nextFitSwap(profile, date, slot, currentId);
+    saveDaySwap(toDateKey(date), slot, next.id);
+    setRevision((n) => n + 1);
+    return next;
+  }
+
+  function rerollToday() {
+    bumpReroll(toDateKey(now));
+    setRevision((n) => n + 1);
+  }
+
   return (
     <div className="app-shell">
       <div className="phone">
@@ -143,12 +163,14 @@ export function App() {
               onSelect={selectWeekDay}
               onOpen={openRecipe}
               onToggleFavorite={toggleFavorite}
+              onOpenSettings={openSettings}
             />
           ) : route.tab === "library" ? (
             <LibraryScreen
               favorites={favorites}
               onOpen={(recipe) => openRecipe(recipe, now)}
               onToggleFavorite={toggleFavorite}
+              onOpenSettings={openSettings}
             />
           ) : route.tab === "grocery" ? (
             <GroceryScreen today={now} profile={profile} revision={revision} />
@@ -163,10 +185,9 @@ export function App() {
               onOpen={(recipe) => openRecipe(recipe, now)}
               onToggleEaten={toggleEaten}
               onToggleFavorite={toggleFavorite}
-              onOpenSettings={() => {
-                setSheetMode("settings");
-                setSheet(true);
-              }}
+              onOpenSettings={openSettings}
+              onReroll={rerollToday}
+              onSwap={(slot, recipe) => swapSlot(slot, now, recipe.id)}
               onSaveWeight={saveWeight}
             />
           )}
@@ -174,8 +195,10 @@ export function App() {
         {showRecipe ? null : <TabBar active={route.tab} onChange={goTab} />}
         {sheet ? (
           <ProfileSheet
+            key={`${sheetMode}-${profileKey(profile)}`}
             initial={sheetMode === "settings" ? profile : null}
             allowSkip={onboard}
+            saveLabel={sheetMode === "settings" ? "保存并重排今日菜单" : undefined}
             onSave={applyProfile}
             onSkip={
               onboard

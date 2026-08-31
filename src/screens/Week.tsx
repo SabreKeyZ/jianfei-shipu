@@ -24,6 +24,7 @@ export function WeekScreen({
   onSelect,
   onOpen,
   onToggleFavorite,
+  onOpenSettings,
 }: {
   today: Date;
   selected: Date;
@@ -32,6 +33,7 @@ export function WeekScreen({
   onSelect: (date: Date) => void;
   onOpen: (recipe: Recipe, date: Date) => void;
   onToggleFavorite: (id: string) => void;
+  onOpenSettings: () => void;
 }) {
   const [filter, setFilter] = useState<MenuFilter>("all");
   const days = weekDates(today);
@@ -43,9 +45,14 @@ export function WeekScreen({
 
   return (
     <section className="page">
-      <header className="page-head">
-        <p className="date-line">按你的身体数据，每天单独排</p>
-        <h1>一周都安排好了</h1>
+      <header className="page-head row-head">
+        <div>
+          <p className="date-line">按你的身体数据，每天单独排</p>
+          <h1>一周都安排好了</h1>
+        </div>
+        <button type="button" className="gear" onClick={onOpenSettings}>
+          改身体数据
+        </button>
       </header>
 
       <div className="week-strip" role="tablist" aria-label="选择星期">

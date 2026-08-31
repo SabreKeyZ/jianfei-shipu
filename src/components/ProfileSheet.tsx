@@ -23,12 +23,14 @@ function decimalAmount(raw: string): string {
 export function ProfileSheet({
   initial,
   allowSkip,
+  saveLabel,
   onSave,
   onSkip,
   onClose,
 }: {
   initial: Profile | null;
   allowSkip: boolean;
+  saveLabel?: string;
   onSave: (profile: Profile) => void;
   onSkip?: () => void;
   onClose?: () => void;
@@ -152,7 +154,7 @@ export function ProfileSheet({
           disabled={Boolean(formError)}
           onClick={submit}
         >
-          按这个排菜单
+          {saveLabel ?? "按这个排菜单"}
         </button>
         {allowSkip ? (
           <button type="button" className="text-btn" onClick={onSkip}>

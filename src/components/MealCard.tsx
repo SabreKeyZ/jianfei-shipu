@@ -13,6 +13,7 @@ export function MealCard({
   onOpen,
   onToggleEaten,
   onToggleFavorite,
+  onSwap,
 }: {
   recipe: Recipe;
   eaten?: boolean;
@@ -20,6 +21,7 @@ export function MealCard({
   onOpen: () => void;
   onToggleEaten?: () => void;
   onToggleFavorite?: () => void;
+  onSwap?: () => void;
 }) {
   const macros = recipeMacros(recipe);
   return (
@@ -27,11 +29,11 @@ export function MealCard({
       <button type="button" className="meal-card-main" onClick={onOpen}>
         <div className="meal-thumb">
           <DishPhoto recipe={recipe} />
+          <span className="photo-time">⏱ {recipe.minutes}分钟</span>
         </div>
         <div className="meal-card-body">
           <div className="meal-card-top">
             <span className="slot-text">{SLOT_LABEL[recipe.slot]}</span>
-            <span className="pill time-pill">{recipe.minutes} 分钟</span>
             {onToggleFavorite ? (
               <HeartButton on={Boolean(favorite)} onToggle={onToggleFavorite} />
             ) : null}
@@ -41,14 +43,23 @@ export function MealCard({
           <MacroRow macros={macros} compact />
         </div>
       </button>
-      {onToggleEaten ? (
-        <button
-          type="button"
-          className={eaten ? "eat-btn on" : "eat-btn"}
-          onClick={onToggleEaten}
-        >
-          {eaten ? "已吃完" : "吃完了"}
-        </button>
+      {onSwap || onToggleEaten ? (
+        <div className="meal-actions">
+          {onSwap ? (
+            <button type="button" className="swap-chip" onClick={onSwap}>
+              换一道
+            </button>
+          ) : null}
+          {onToggleEaten ? (
+            <button
+              type="button"
+              className={eaten ? "eat-btn on" : "eat-btn"}
+              onClick={onToggleEaten}
+            >
+              {eaten ? "已吃完" : "吃完了"}
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </article>
   );

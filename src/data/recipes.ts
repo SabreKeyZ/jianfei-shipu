@@ -1,4 +1,5 @@
 import type { Ingredient, Recipe } from "../types";
+import { MORE_RECIPES } from "./more-recipes";
 
 function i(
   name: string,
@@ -10,7 +11,7 @@ function i(
   return { name, amount, food, grams, group };
 }
 
-export const RECIPES: Recipe[] = [
+const CORE_RECIPES: Recipe[] = [
   {
     id: "b-oat-egg-banana",
     name: "燕麦牛奶煮蛋配香蕉",
@@ -1333,6 +1334,8 @@ export const RECIPES: Recipe[] = [
     tip: "藕片切薄、大火快炒，焖久了就粉、没脆劲。",
   },
 ];
+
+export const RECIPES: Recipe[] = [...CORE_RECIPES, ...MORE_RECIPES];
 
 export const RECIPE_BY_ID: Record<string, Recipe> = Object.fromEntries(
   RECIPES.map((recipe) => [recipe.id, recipe]),

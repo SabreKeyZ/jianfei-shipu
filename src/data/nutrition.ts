@@ -69,6 +69,15 @@ export const FOOD_PER_100G: Record<string, Macros> = {
   oyster_sauce: { kcal: 51, protein: 1.4, carbs: 10.8, fat: 0.2 },
   edamame: { kcal: 121, protein: 11.5, carbs: 8.5, fat: 5.2 },
   lotus_root: { kcal: 54, protein: 1.9, carbs: 12.4, fat: 0.1 },
+  yam: { kcal: 56, protein: 1.9, carbs: 12.4, fat: 0.2 },
+  bitter_melon: { kcal: 19, protein: 1.0, carbs: 3.4, fat: 0.1 },
+  okra: { kcal: 33, protein: 2.0, carbs: 7.0, fat: 0.2 },
+  green_bean: { kcal: 31, protein: 2.4, carbs: 7.1, fat: 0.1 },
+  kiwi: { kcal: 61, protein: 1.1, carbs: 14.7, fat: 0.5 },
+  cherry_tomato: { kcal: 18, protein: 0.9, carbs: 3.9, fat: 0.2 },
+  purple_potato: { kcal: 82, protein: 1.6, carbs: 18.0, fat: 0.1 },
+  glass_noodle: { kcal: 80, protein: 0.2, carbs: 19.8, fat: 0.1 },
+  pea: { kcal: 81, protein: 5.4, carbs: 14.5, fat: 0.4 },
 };
 
 export function ingredientMacros(item: Ingredient): Macros {
